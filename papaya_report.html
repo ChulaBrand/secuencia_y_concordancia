@@ -5,6 +5,7 @@
 <title>Chula Brand - Reporte de Papaya</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
 <style>
   :root {
     --purple: #5B2A86;
@@ -63,6 +64,13 @@
   .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
   .hidden { display: none; }
+  #sheetsBox { margin-top: 16px; }
+  #sheetsText {
+    width: 100%; height: 220px; font-family: Consolas, Monaco, monospace; font-size: 12px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px; resize: vertical;
+    background: #FAFAFA; color: var(--text);
+  }
+  #copyStatus { margin-left: 10px; font-size: 13px; color: var(--purple); }
 </style>
 </head>
 <body>
@@ -86,8 +94,15 @@
   <div class="card hidden" id="resultsCard">
     <div id="summary"></div>
     <div class="actions">
-      <button id="downloadBtn" class="secondary">⬇ Descargar Excel</button>
+      <button id="downloadExcelBtn" class="secondary">⬇ Excel</button>
+      <button id="downloadWordBtn" class="secondary">⬇ Word</button>
+      <button id="showSheetsBtn" class="secondary">📋 Lista para Sheets</button>
       <button id="resetBtn">Procesar otro PDF</button>
+    </div>
+    <div id="sheetsBox" class="hidden">
+      <textarea id="sheetsText" readonly></textarea>
+      <button id="copySheetsBtn">Copiar al portapapeles</button>
+      <span id="copyStatus"></span>
     </div>
     <div id="flags"></div>
     <table id="resultsTable">
@@ -393,7 +408,13 @@ const resultsCard = document.getElementById("resultsCard");
 const summaryEl = document.getElementById("summary");
 const flagsEl = document.getElementById("flags");
 const tbody = document.querySelector("#resultsTable tbody");
-const downloadBtn = document.getElementById("downloadBtn");
+const downloadExcelBtn = document.getElementById("downloadExcelBtn");
+const downloadWordBtn = document.getElementById("downloadWordBtn");
+const showSheetsBtn = document.getElementById("showSheetsBtn");
+const sheetsBox = document.getElementById("sheetsBox");
+const sheetsText = document.getElementById("sheetsText");
+const copySheetsBtn = document.getElementById("copySheetsBtn");
+const copyStatus = document.getElementById("copyStatus");
 const resetBtn = document.getElementById("resetBtn");
 
 let lastRows = [], lastFlags = [], lastFileName = "reporte";
@@ -411,6 +432,7 @@ fileInput.addEventListener("change", () => {
 });
 resetBtn.addEventListener("click", () => {
   resultsCard.classList.add("hidden");
+  sheetsBox.classList.add("hidden");
   statusEl.textContent = "";
   fileInput.value = "";
 });
@@ -423,6 +445,7 @@ async function handleFile(file) {
   lastFileName = file.name.replace(/\.pdf$/i, "");
   statusEl.textContent = "Leyendo PDF...";
   resultsCard.classList.add("hidden");
+  sheetsBox.classList.add("hidden");
   try {
     const buf = await file.arrayBuffer();
     const lines = await extractLines(buf);
@@ -468,7 +491,7 @@ function renderResults(rows, flags) {
   resultsCard.classList.remove("hidden");
 }
 
-downloadBtn.addEventListener("click", () => {
+downloadExcelBtn.addEventListener("click", () => {
   const data = [["#", "PALLETS", "CLIENTE", "COLOR Y TAMAÑO"]];
   lastRows.forEach((r, i) => data.push([i + 1, r.pallets, r.cliente_corto, r.codigo]));
   const total = lastRows.reduce((s, r) => s + r.pallets_num, 0);
@@ -483,6 +506,50 @@ downloadBtn.addEventListener("click", () => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Papaya");
   XLSX.writeFile(wb, `Papaya_Report_${lastFileName}.xlsx`);
+});
+
+downloadWordBtn.addEventListener("click", async () => {
+  const { Document, Packer, Paragraph, TextRun, TabStopType } = docx;
+  const TAB1 = 2300, TAB2 = 5100;
+  const bulletLine = (pallets, cliente, codigo) => new Paragraph({
+    bullet: { level: 0 },
+    tabStops: [{ type: TabStopType.LEFT, position: TAB1 }, { type: TabStopType.LEFT, position: TAB2 }],
+    spacing: { after: 60 },
+    children: [new TextRun({ text: `${pallets}\t${cliente}\t${codigo}`, bold: true, italics: true, font: "Arial", size: 20 })],
+  });
+  const doc = new Document({
+    sections: [{
+      properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 900, bottom: 900, left: 900, right: 900 } } },
+      children: [
+        new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: `CHULA BRAND - PAPAYA REPORT ${lastFileName}`, bold: true, font: "Arial", size: 24 })] }),
+        ...lastRows.map(r => bulletLine(r.pallets, r.cliente_corto, r.codigo)),
+      ],
+    }],
+  });
+  const blob = await Packer.toBlob(doc);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `Papaya_Report_${lastFileName}.docx`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+showSheetsBtn.addEventListener("click", () => {
+  const lines = lastRows.map(r => `${r.pallets}\t${r.cliente_corto}\t${r.codigo}`);
+  sheetsText.value = lines.join("\n");
+  sheetsBox.classList.remove("hidden");
+  copyStatus.textContent = "";
+});
+
+copySheetsBtn.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(sheetsText.value);
+    copyStatus.textContent = "¡Copiado!";
+  } catch {
+    sheetsText.select();
+    document.execCommand("copy");
+    copyStatus.textContent = "¡Copiado!";
+  }
 });
 </script>
 </body>
