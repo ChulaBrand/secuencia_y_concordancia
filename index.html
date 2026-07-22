@@ -471,6 +471,7 @@
     text-align:center;
     margin-bottom:10px;
   }
+  .ronda-completada-hint.roja{ color:var(--bad); }
   .back-btn{
     background:transparent;
     border:none;
@@ -1236,14 +1237,21 @@
     var ahora = new Date();
     var claveActual = rondaPendiente || claveRondaMasReciente(ahora);
     var actualRegistrada = rondasRegistradas.has(claveActual);
+    var minutosPasados = (ahora - claveAFecha(claveActual, ahora)) / 60000;
 
     if (actualRegistrada){
       var quienRegistro = rondaCompletadaPor[claveActual];
       rondaCompletadaHintEl.textContent = "✓ Ronda de las " + claveActual + " ya registrada" +
         (quienRegistro ? " por " + quienRegistro : "");
       rondaCompletadaHintEl.classList.remove("hidden");
+      rondaCompletadaHintEl.classList.remove("roja");
+    } else if (minutosPasados >= 1){
+      rondaCompletadaHintEl.textContent = "No se ha registrado la ronda de las " + claveActual;
+      rondaCompletadaHintEl.classList.remove("hidden");
+      rondaCompletadaHintEl.classList.add("roja");
     } else {
       rondaCompletadaHintEl.classList.add("hidden");
+      rondaCompletadaHintEl.classList.remove("roja");
     }
 
     var claveParaTurno = actualRegistrada ? claveRonda(siguienteMarca(ahora)) : claveActual;
@@ -1557,6 +1565,13 @@
     var m = floor.getMinutes();
     floor.setMinutes(m - (m % 15), 0, 0);
     return claveRonda(floor);
+  }
+
+  function claveAFecha(clave, referencia){
+    var partes = clave.split(":");
+    var d = new Date(referencia);
+    d.setHours(parseInt(partes[0], 10), parseInt(partes[1], 10), 0, 0);
+    return d;
   }
 
   // ---- Horario de operación ----
