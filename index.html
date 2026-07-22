@@ -203,11 +203,6 @@
   }
   .btn-secondary:hover{ background:var(--border); }
   .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-  #estadoConexion{
-    font-size:13px;
-    margin-top:8px;
-    color:var(--muted);
-  }
   table{
     width:100%;
     border-collapse:collapse;
@@ -456,18 +451,7 @@
 <main>
 
   <input type="hidden" id="inspectorName">
-
-  <div class="card">
-    <h2>Conexión con Google Sheets</h2>
-    <p class="footer-note" style="margin-bottom:12px;">
-      Esta es la dirección donde se guardan permanentemente los registros. Ya viene configurada; normalmente no necesitas tocarla. Cada vez que registras una ronda con "Guardar registro", se envía directo a esta hoja.
-    </p>
-    <div class="field">
-      <label for="sheetsUrl">URL del Web App de Google Sheets</label>
-      <input id="sheetsUrl" type="text" value="https://script.google.com/macros/s/AKfycbyHf5fvYuOn8Ti4hcRHr0sxMFAx28AMWPpgbhacQlpRvAxQPM0hfCaZCGB6OWYSp-B-ng/exec" placeholder="Pega aquí la URL que te da Google Apps Script">
-    </div>
-    <div id="estadoConexion"></div>
-  </div>
+  <input type="hidden" id="sheetsUrl" value="https://script.google.com/macros/s/AKfycbyHf5fvYuOn8Ti4hcRHr0sxMFAx28AMWPpgbhacQlpRvAxQPM0hfCaZCGB6OWYSp-B-ng/exec">
 
   <div class="card">
     <h2>Historial de rondas</h2>
@@ -545,7 +529,6 @@
   var historialBody = document.getElementById("historialBody");
   var historialVacio = document.getElementById("historialVacio");
   var toastEl = document.getElementById("toast");
-  var estadoConexionEl = document.getElementById("estadoConexion");
   var loginOverlay = document.getElementById("loginOverlay");
   var loginNombre = document.getElementById("loginNombre");
   var loginError = document.getElementById("loginError");
@@ -876,10 +859,7 @@
 
   function enviarAGoogleSheets(claveHora, inspector, registros, ahora){
     var url = document.getElementById("sheetsUrl").value.trim();
-    if (!url){
-      estadoConexionEl.textContent = "No hay URL configurada: este registro NO se envió a Google Sheets.";
-      return;
-    }
+    if (!url) return;
     var payload = {
       fecha: ahora.toISOString().slice(0,10),
       horaRonda: claveHora,
@@ -891,12 +871,7 @@
       mode: "no-cors",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
-    }).then(function(){
-      estadoConexionEl.textContent = "Último envío a Google Sheets: " + claveHora + " (" +
-        pad(new Date().getHours()) + ":" + pad(new Date().getMinutes()) + ":" + pad(new Date().getSeconds()) +
-        "). Nota: por restricciones del navegador no podemos confirmar aquí si Google lo aceptó — revisa la hoja.";
     }).catch(function(){
-      estadoConexionEl.textContent = "No se pudo contactar Google Sheets (revisa la URL o tu conexión). El registro solo quedó guardado localmente.";
       mostrarToast("No se pudo contactar Google Sheets (se guardó localmente).");
     });
   }
