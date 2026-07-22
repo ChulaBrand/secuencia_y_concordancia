@@ -263,6 +263,114 @@
     z-index:60;
   }
   #loginOverlay.hidden{ display:none; }
+  @keyframes alertaFlash{
+    0%,100%{ background:linear-gradient(180deg,var(--header-1),var(--header-2)); }
+    50%{ background:var(--bad); }
+  }
+  #loginOverlay.alerta{ animation:alertaFlash .9s ease-in-out infinite; }
+  @keyframes pulseBorde{
+    0%,100%{ box-shadow:0 20px 50px rgba(0,0,0,.35); }
+    50%{ box-shadow:0 0 0 6px var(--bad), 0 20px 50px rgba(0,0,0,.35); }
+  }
+  #loginOverlay.alerta #loginCard{ animation:pulseBorde .9s ease-in-out infinite; }
+  .login-clock{
+    display:flex;
+    gap:12px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .login-clock > div{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 14px;
+    flex:1;
+    min-width:130px;
+  }
+  .login-clock-label{
+    display:block;
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .login-clock-value{
+    display:block;
+    font-size:18px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    color:var(--accent-2);
+  }
+  .admin-link{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:12px;
+    text-decoration:underline;
+    padding:6px 0;
+    margin-top:6px;
+  }
+  .admin-link:hover{ color:var(--accent); }
+  #adminOverlay{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.8);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:70;
+  }
+  #adminOverlay.hidden{ display:none; }
+  #adminCard{
+    background:var(--panel);
+    color:var(--text);
+    border-radius:16px;
+    max-width:560px;
+    width:100%;
+    max-height:90vh;
+    overflow-y:auto;
+    padding:28px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+  }
+  #adminCard h2{ margin:0 0 4px; font-size:19px; }
+  #adminCard .sub{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+  #adminGateError{
+    color:var(--bad);
+    font-size:13px;
+    display:none;
+    margin-bottom:6px;
+  }
+  .admin-fila-usuario{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 0;
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .admin-usuario-nombre{
+    flex:1;
+    min-width:100px;
+    font-weight:600;
+  }
+  .admin-pin-input{
+    width:90px;
+    padding:7px 9px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--panel-2);
+    color:var(--text);
+  }
+  .admin-quitar-usuario{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:15px;
+    padding:4px 8px;
+    border-radius:6px;
+  }
+  .admin-quitar-usuario:hover{ background:var(--bad-bg); color:var(--bad); }
   #loginCard{
     background:var(--panel);
     border-radius:16px;
@@ -292,7 +400,7 @@
   .usuario-btn{
     display:flex;
     align-items:center;
-    justify-content:space-between;
+    justify-content:center;
     width:100%;
     text-align:left;
     background:var(--panel-2);
@@ -539,16 +647,84 @@
 
 <div id="loginOverlay" class="hidden">
   <div id="loginCard">
-    <h2>¿Quién va a llenar esta ronda?</h2>
-    <div class="sub">Toca tu nombre para identificarte. Al terminar de registrar, vuelves aquí para que entre el siguiente.</div>
-    <div id="listaUsuarios"></div>
-    <div id="loginError">Escribe un nombre para agregarlo.</div>
-    <div class="field">
-      <label for="loginNombre">Agregar nuevo usuario</label>
-      <input id="loginNombre" type="text" placeholder="Nombre del inspector" autocomplete="off">
+    <div id="loginListView">
+      <h2>¿Quién va a llenar esta ronda?</h2>
+      <div class="sub">Toca tu nombre e ingresa tu PIN. Al terminar de registrar, vuelves aquí para que entre el siguiente.</div>
+      <div class="login-clock">
+        <div>
+          <span class="login-clock-label">Hora actual</span>
+          <span class="login-clock-value" id="loginHoraActual">--:--:--</span>
+        </div>
+        <div>
+          <span class="login-clock-label">Próxima ronda</span>
+          <span class="login-clock-value" id="loginProximaRonda">--:--</span>
+        </div>
+      </div>
+      <div id="listaUsuarios"></div>
+      <button type="button" class="admin-link" id="abrirAdminBtn">⚙ Administrar usuarios</button>
     </div>
-    <div class="btn-row">
-      <button class="btn-primary" id="loginBtn">Agregar y entrar</button>
+    <div id="loginPinView" class="hidden">
+      <h2>Hola, <span id="loginPinNombre">—</span></h2>
+      <div class="sub">Ingresa tu PIN para identificarte.</div>
+      <div class="field">
+        <label for="loginPinInput">PIN</label>
+        <input id="loginPinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
+      </div>
+      <div id="loginPinError">PIN incorrecto.</div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="loginPinAtras">Atrás</button>
+        <button class="btn-primary" id="loginPinConfirmar">Entrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="adminOverlay" class="hidden">
+  <div id="adminCard">
+    <div id="adminGateView">
+      <h2>Panel de administración</h2>
+      <div class="sub">Ingresa el PIN de administrador para continuar.</div>
+      <div class="field">
+        <label for="adminGatePin">PIN de administrador</label>
+        <input id="adminGatePin" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
+      </div>
+      <div id="adminGateError">PIN incorrecto.</div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="adminGateCancelar">Cancelar</button>
+        <button class="btn-primary" id="adminGateEntrar">Entrar</button>
+      </div>
+    </div>
+    <div id="adminPanelView" class="hidden">
+      <h2>Administrar usuarios</h2>
+      <div class="sub">Agrega personas y define su PIN de 4 dígitos. Ellos lo usarán para identificarse.</div>
+      <div id="adminListaUsuarios"></div>
+      <div class="row-inline" style="margin-top:10px;">
+        <div class="field" style="margin-bottom:0;">
+          <label for="adminNuevoNombre">Nombre</label>
+          <input id="adminNuevoNombre" type="text" placeholder="Nombre del inspector" autocomplete="off">
+        </div>
+        <div class="field" style="margin-bottom:0; max-width:130px;">
+          <label for="adminNuevoPin">PIN</label>
+          <input id="adminNuevoPin" type="password" inputmode="numeric" maxlength="8" placeholder="1234" autocomplete="off">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="adminAgregarBtn">Agregar usuario</button>
+      </div>
+
+      <hr style="border:none; border-top:1px solid var(--border); margin:18px 0;">
+
+      <div class="field">
+        <label for="adminNuevoPinMaestro">Cambiar PIN de administrador</label>
+        <input id="adminNuevoPinMaestro" type="password" inputmode="numeric" maxlength="8" placeholder="Nuevo PIN de administrador" autocomplete="off">
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="adminGuardarPinMaestroBtn">Guardar nuevo PIN de administrador</button>
+      </div>
+
+      <div class="btn-row" style="margin-top:18px;">
+        <button class="btn-secondary" id="adminCerrarBtn">Cerrar panel</button>
+      </div>
     </div>
   </div>
 </div>
@@ -576,9 +752,14 @@
   var historialVacio = document.getElementById("historialVacio");
   var toastEl = document.getElementById("toast");
   var loginOverlay = document.getElementById("loginOverlay");
-  var loginNombre = document.getElementById("loginNombre");
-  var loginError = document.getElementById("loginError");
-  var loginBtn = document.getElementById("loginBtn");
+  var loginListView = document.getElementById("loginListView");
+  var loginPinView = document.getElementById("loginPinView");
+  var loginPinNombre = document.getElementById("loginPinNombre");
+  var loginPinInput = document.getElementById("loginPinInput");
+  var loginPinError = document.getElementById("loginPinError");
+  var loginPinAtras = document.getElementById("loginPinAtras");
+  var loginPinConfirmar = document.getElementById("loginPinConfirmar");
+  var abrirAdminBtn = document.getElementById("abrirAdminBtn");
   var cambiarInspectorBtn = document.getElementById("cambiarInspectorBtn");
   var inspectorBadge = document.getElementById("inspectorBadge");
   var inspectorInput = document.getElementById("inspectorName");
@@ -586,10 +767,31 @@
   var themeToggleIcon = document.getElementById("themeToggleIcon");
   var themeToggleLabel = document.getElementById("themeToggleLabel");
   var listaUsuariosEl = document.getElementById("listaUsuarios");
+  var loginHoraActual = document.getElementById("loginHoraActual");
+  var loginProximaRonda = document.getElementById("loginProximaRonda");
+
+  var adminOverlay = document.getElementById("adminOverlay");
+  var adminGateView = document.getElementById("adminGateView");
+  var adminPanelView = document.getElementById("adminPanelView");
+  var adminGatePin = document.getElementById("adminGatePin");
+  var adminGateError = document.getElementById("adminGateError");
+  var adminGateEntrar = document.getElementById("adminGateEntrar");
+  var adminGateCancelar = document.getElementById("adminGateCancelar");
+  var adminListaUsuariosEl = document.getElementById("adminListaUsuarios");
+  var adminNuevoNombre = document.getElementById("adminNuevoNombre");
+  var adminNuevoPin = document.getElementById("adminNuevoPin");
+  var adminAgregarBtn = document.getElementById("adminAgregarBtn");
+  var adminNuevoPinMaestro = document.getElementById("adminNuevoPinMaestro");
+  var adminGuardarPinMaestroBtn = document.getElementById("adminGuardarPinMaestroBtn");
+  var adminCerrarBtn = document.getElementById("adminCerrarBtn");
 
   var USERS_KEY = "calidad_usuarios";
+  var ADMIN_PIN_KEY = "calidad_admin_pin";
+  var DEFAULT_ADMIN_PIN = "1234";
   var THEME_KEY = "calidad_theme";
   var rondaPendiente = null;
+  var pinObjetivo = null;
+  var alarmaInterval = null;
 
   function pad(n){ return String(n).padStart(2,"0"); }
 
@@ -622,14 +824,19 @@
     }
   })();
 
-  // ---- Usuarios registrados e identificación ----
+  // ---- Usuarios registrados (con PIN) e identificación ----
   function inspectorActual(){
     return (inspectorInput.value || "").trim();
   }
 
   function cargarUsuarios(){
-    try{ return JSON.parse(localStorage.getItem(USERS_KEY) || "[]"); }
-    catch(e){ return []; }
+    try{
+      var raw = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+      return raw.map(function(u){
+        if (typeof u === "string") return { nombre: u, pin: "" };
+        return { nombre: u.nombre, pin: u.pin || "" };
+      });
+    }catch(e){ return []; }
   }
 
   function guardarUsuarios(lista){
@@ -648,32 +855,60 @@
     if (!usuarios.length){
       var vacio = document.createElement("div");
       vacio.className = "usuarios-vacio";
-      vacio.textContent = "Todavía no hay usuarios registrados. Agrega el primero abajo.";
+      vacio.textContent = "Todavía no hay usuarios registrados. Pide al administrador que los agregue.";
       listaUsuariosEl.appendChild(vacio);
       return;
     }
-    usuarios.forEach(function(nombre){
+    usuarios.forEach(function(u){
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "usuario-btn";
-      btn.innerHTML = "<span>" + escapeHtml(nombre) + "</span><span class=\"usuario-quitar\" title=\"Quitar\">✕</span>";
-      btn.addEventListener("click", function(ev){
-        if (ev.target.closest(".usuario-quitar")){
-          ev.stopPropagation();
-          guardarUsuarios(cargarUsuarios().filter(function(n){ return n !== nombre; }));
-          renderUsuarios();
-          return;
-        }
-        seleccionarUsuario(nombre);
+      btn.innerHTML = "<span>" + escapeHtml(u.nombre) + "</span>";
+      btn.addEventListener("click", function(){
+        mostrarPinView(u.nombre);
       });
       listaUsuariosEl.appendChild(btn);
     });
   }
 
-  function mostrarLogin(){
-    loginError.style.display = "none";
-    loginNombre.value = "";
+  function mostrarListaUsuarios(){
+    pinObjetivo = null;
+    loginPinView.classList.add("hidden");
+    loginListView.classList.remove("hidden");
     renderUsuarios();
+  }
+
+  function mostrarPinView(nombre){
+    pinObjetivo = nombre;
+    loginListView.classList.add("hidden");
+    loginPinView.classList.remove("hidden");
+    loginPinNombre.textContent = nombre;
+    loginPinError.style.display = "none";
+    loginPinInput.value = "";
+    setTimeout(function(){ loginPinInput.focus(); }, 50);
+  }
+
+  function validarPin(){
+    var usuarios = cargarUsuarios();
+    var u = usuarios.find(function(x){ return x.nombre === pinObjetivo; });
+    var intento = loginPinInput.value.trim();
+    if (u && intento && intento === u.pin){
+      seleccionarUsuario(pinObjetivo);
+    } else {
+      loginPinError.style.display = "block";
+      loginPinInput.value = "";
+      loginPinInput.focus();
+    }
+  }
+
+  loginPinConfirmar.addEventListener("click", validarPin);
+  loginPinInput.addEventListener("keydown", function(ev){
+    if (ev.key === "Enter") validarPin();
+  });
+  loginPinAtras.addEventListener("click", mostrarListaUsuarios);
+
+  function mostrarLogin(){
+    mostrarListaUsuarios();
     loginOverlay.classList.remove("hidden");
   }
 
@@ -687,6 +922,7 @@
   }
 
   function seleccionarUsuario(nombre){
+    detenerAlertaPendiente();
     fijarInspector(nombre);
     ocultarLogin();
     if (rondaPendiente){
@@ -702,27 +938,128 @@
     mostrarLogin();
   }
 
-  loginBtn.addEventListener("click", function(){
-    var nombre = loginNombre.value.trim();
-    if (!nombre){
-      loginError.style.display = "block";
-      return;
-    }
-    loginError.style.display = "none";
-    var usuarios = cargarUsuarios();
-    if (usuarios.indexOf(nombre) === -1){
-      usuarios.push(nombre);
-      guardarUsuarios(usuarios);
-    }
-    seleccionarUsuario(nombre);
-  });
-
-  loginNombre.addEventListener("keydown", function(ev){
-    if (ev.key === "Enter") loginBtn.click();
-  });
-
   cambiarInspectorBtn.addEventListener("click", function(){
     mostrarLogin();
+  });
+
+  // ---- Alarma fuerte + parpadeo cuando hay una ronda pendiente ----
+  function iniciarAlertaPendiente(){
+    loginOverlay.classList.add("alerta");
+    sonarAlerta();
+    if (alarmaInterval) clearInterval(alarmaInterval);
+    alarmaInterval = setInterval(sonarAlerta, 4000);
+  }
+
+  function detenerAlertaPendiente(){
+    loginOverlay.classList.remove("alerta");
+    if (alarmaInterval){
+      clearInterval(alarmaInterval);
+      alarmaInterval = null;
+    }
+  }
+
+  // ---- Panel de administración ----
+  function renderAdminUsuarios(){
+    var usuarios = cargarUsuarios();
+    adminListaUsuariosEl.innerHTML = "";
+    if (!usuarios.length){
+      var vacio = document.createElement("div");
+      vacio.className = "usuarios-vacio";
+      vacio.textContent = "Todavía no hay usuarios. Agrega el primero abajo.";
+      adminListaUsuariosEl.appendChild(vacio);
+      return;
+    }
+    usuarios.forEach(function(u){
+      var fila = document.createElement("div");
+      fila.className = "admin-fila-usuario";
+      fila.innerHTML =
+        '<span class="admin-usuario-nombre">' + escapeHtml(u.nombre) + '</span>' +
+        '<input type="password" inputmode="numeric" maxlength="8" class="admin-pin-input" value="' + escapeHtml(u.pin) + '" placeholder="PIN">' +
+        '<button type="button" class="btn-secondary admin-guardar-pin">Guardar</button>' +
+        '<button type="button" class="admin-quitar-usuario" title="Eliminar">✕</button>';
+      var pinInput = fila.querySelector(".admin-pin-input");
+      fila.querySelector(".admin-guardar-pin").addEventListener("click", function(){
+        var lista = cargarUsuarios();
+        var obj = lista.find(function(x){ return x.nombre === u.nombre; });
+        if (obj){
+          obj.pin = pinInput.value.trim();
+          guardarUsuarios(lista);
+          mostrarToast("PIN actualizado para " + u.nombre + ".");
+        }
+      });
+      fila.querySelector(".admin-quitar-usuario").addEventListener("click", function(){
+        guardarUsuarios(cargarUsuarios().filter(function(x){ return x.nombre !== u.nombre; }));
+        renderAdminUsuarios();
+      });
+      adminListaUsuariosEl.appendChild(fila);
+    });
+  }
+
+  abrirAdminBtn.addEventListener("click", function(){
+    adminGatePin.value = "";
+    adminGateError.style.display = "none";
+    adminGateView.classList.remove("hidden");
+    adminPanelView.classList.add("hidden");
+    adminOverlay.classList.remove("hidden");
+    setTimeout(function(){ adminGatePin.focus(); }, 50);
+  });
+
+  function validarAdminPin(){
+    var intento = adminGatePin.value.trim();
+    var guardado = localStorage.getItem(ADMIN_PIN_KEY) || DEFAULT_ADMIN_PIN;
+    if (intento && intento === guardado){
+      adminGateError.style.display = "none";
+      adminGateView.classList.add("hidden");
+      adminPanelView.classList.remove("hidden");
+      renderAdminUsuarios();
+    } else {
+      adminGateError.style.display = "block";
+      adminGatePin.value = "";
+    }
+  }
+
+  adminGateEntrar.addEventListener("click", validarAdminPin);
+  adminGatePin.addEventListener("keydown", function(ev){
+    if (ev.key === "Enter") validarAdminPin();
+  });
+
+  adminGateCancelar.addEventListener("click", function(){
+    adminOverlay.classList.add("hidden");
+  });
+
+  adminCerrarBtn.addEventListener("click", function(){
+    adminOverlay.classList.add("hidden");
+  });
+
+  adminAgregarBtn.addEventListener("click", function(){
+    var nombre = adminNuevoNombre.value.trim();
+    var pin = adminNuevoPin.value.trim();
+    if (!nombre || !pin){
+      mostrarToast("Escribe nombre y PIN.");
+      return;
+    }
+    var lista = cargarUsuarios();
+    if (lista.some(function(x){ return x.nombre === nombre; })){
+      mostrarToast("Ese nombre ya existe.");
+      return;
+    }
+    lista.push({ nombre: nombre, pin: pin });
+    guardarUsuarios(lista);
+    adminNuevoNombre.value = "";
+    adminNuevoPin.value = "";
+    renderAdminUsuarios();
+    mostrarToast("Usuario agregado.");
+  });
+
+  adminGuardarPinMaestroBtn.addEventListener("click", function(){
+    var nuevo = adminNuevoPinMaestro.value.trim();
+    if (!nuevo){
+      mostrarToast("Escribe el nuevo PIN de administrador.");
+      return;
+    }
+    localStorage.setItem(ADMIN_PIN_KEY, nuevo);
+    adminNuevoPinMaestro.value = "";
+    mostrarToast("PIN de administrador actualizado.");
   });
 
   mostrarLogin();
@@ -741,9 +1078,13 @@
 
   function actualizarReloj(){
     var now = new Date();
-    relojEl.textContent = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+    var horaTexto = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
     var prox = siguienteMarca(now);
-    proximaEl.textContent = pad(prox.getHours()) + ":" + pad(prox.getMinutes());
+    var proximaTexto = pad(prox.getHours()) + ":" + pad(prox.getMinutes());
+    relojEl.textContent = horaTexto;
+    proximaEl.textContent = proximaTexto;
+    loginHoraActual.textContent = horaTexto;
+    loginProximaRonda.textContent = proximaTexto;
     verificarDisparo(now);
   }
 
@@ -757,7 +1098,7 @@
         ultimaClaveDisparada = clave;
         if (!loginOverlay.classList.contains("hidden") || !inspectorActual()){
           rondaPendiente = clave;
-          sonarAlerta();
+          iniciarAlertaPendiente();
         } else {
           abrirModal(clave, true);
         }
@@ -768,17 +1109,18 @@
   function sonarAlerta(){
     try{
       var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      [880, 660].forEach(function(freq, i){
+      var tonos = [880, 660, 880, 660, 880, 660];
+      tonos.forEach(function(freq, i){
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
-        osc.type = "sine";
+        osc.type = "square";
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, ctx.currentTime + i*0.22);
-        gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + i*0.22 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i*0.22 + 0.2);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + i*0.18);
+        gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + i*0.18 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i*0.18 + 0.16);
         osc.connect(gain).connect(ctx.destination);
-        osc.start(ctx.currentTime + i*0.22);
-        osc.stop(ctx.currentTime + i*0.22 + 0.22);
+        osc.start(ctx.currentTime + i*0.18);
+        osc.stop(ctx.currentTime + i*0.18 + 0.18);
       });
     }catch(e){ /* audio no disponible, se ignora */ }
   }
