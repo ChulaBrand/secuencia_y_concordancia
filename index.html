@@ -1228,12 +1228,7 @@
     });
   }
 
-  function mostrarListaUsuarios(){
-    pinObjetivo = null;
-    loginPinView.classList.add("hidden");
-    loginListView.classList.remove("hidden");
-    renderUsuarios();
-
+  function actualizarHintsLogin(){
     var ahora = new Date();
     var claveActual = rondaPendiente || claveRondaMasReciente(ahora);
     var actualRegistrada = rondasRegistradas.has(claveActual);
@@ -1265,6 +1260,14 @@
       turnoHintEl.classList.add("hidden");
       turnoHintEl.onclick = null;
     }
+  }
+
+  function mostrarListaUsuarios(){
+    pinObjetivo = null;
+    loginPinView.classList.add("hidden");
+    loginListView.classList.remove("hidden");
+    renderUsuarios();
+    actualizarHintsLogin();
   }
 
   function mostrarPinView(nombre){
@@ -1557,6 +1560,9 @@
     loginProximaRonda.textContent = proximaTexto;
     if (rondaHoraReal) rondaHoraReal.textContent = horaTexto;
     actualizarEstadoHorario(now);
+    if (!loginOverlay.classList.contains("hidden") && !loginListView.classList.contains("hidden")){
+      actualizarHintsLogin();
+    }
     verificarDisparo(now);
   }
 
