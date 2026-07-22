@@ -301,8 +301,10 @@
   #adminGateError{
     color:var(--bad);
     font-size:13px;
+    font-weight:700;
     display:none;
     margin-bottom:6px;
+    text-align:center;
   }
   .admin-tabs{
     display:flex;
@@ -496,21 +498,23 @@
   }
   #loginCard h2{ margin:0 0 4px; font-size:19px; }
   #loginCard .sub{ color:var(--muted); font-size:13px; margin-bottom:18px; }
-  #loginError{
+  #loginPinError{
     color:var(--bad);
     font-size:13px;
+    font-weight:700;
     display:none;
     margin-bottom:6px;
+    text-align:center;
   }
   .pin-dots{
     display:flex;
     justify-content:center;
-    gap:16px;
-    margin:8px 0 24px;
+    gap:14px;
+    margin:6px 0 18px;
   }
   .pin-dot{
-    width:16px;
-    height:16px;
+    width:14px;
+    height:14px;
     border-radius:50%;
     border:2px solid var(--border);
     background:transparent;
@@ -523,18 +527,18 @@
   .pin-keypad{
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:12px;
-    max-width:320px;
+    gap:10px;
+    max-width:270px;
     margin:0 auto;
   }
   .pin-key{
     background:var(--panel-2);
     border:1px solid var(--border);
-    border-radius:14px;
-    font-size:24px;
+    border-radius:12px;
+    font-size:20px;
     font-weight:700;
     color:var(--text);
-    padding:20px 0;
+    padding:15px 0;
   }
   .pin-key:hover{ background:var(--border); }
   .pin-key-empty{
@@ -543,7 +547,7 @@
     visibility:hidden;
   }
   .pin-key-del{
-    font-size:19px;
+    font-size:16px;
     color:var(--muted);
     background:transparent;
     border:1px solid var(--border);
