@@ -837,6 +837,7 @@
       </div>
       <h2>¿Quién va a llenar esta ronda?</h2>
       <div class="sub">Toca tu nombre e ingresa tu PIN. Al terminar de registrar, vuelves aquí para que entre el siguiente.</div>
+      <div id="rondaCompletadaHint" class="turno-hint hidden" style="cursor:default;"></div>
       <button type="button" id="turnoHint" class="turno-hint hidden"></button>
       <div id="horarioEstado" class="horario-estado hidden"></div>
       <div id="listaUsuarios"></div>
@@ -876,6 +877,7 @@
       <div class="admin-tabs">
         <button type="button" class="admin-tab-btn active" data-tab="usuarios">Usuarios</button>
         <button type="button" class="admin-tab-btn" data-tab="horarios">Horarios</button>
+        <button type="button" class="admin-tab-btn" data-tab="alarma">Alarma</button>
       </div>
 
       <div id="adminTabUsuarios" class="admin-tab-panel">
@@ -919,9 +921,11 @@
         <div class="sub" style="margin-bottom:14px;">Indica quién debería llenar cada franja de 15 minutos. Es una guía: se muestra en el panel de entrada, pero cualquier usuario puede seguir registrando.</div>
         <div id="adminTurnos"></div>
         <button class="btn-secondary admin-add-btn" id="adminGuardarTurnosBtn">Guardar turnos</button>
+      </div>
 
-        <div class="admin-section-label" style="margin-top:26px;">Alarma</div>
-        <div class="sub" style="margin-bottom:14px;">Cuánto tiempo suena y qué tan fuerte es la alarma cuando nadie ha entrado a registrar. Se apaga antes si alguien toca la pantalla.</div>
+      <div id="adminTabAlarma" class="admin-tab-panel hidden">
+        <div class="admin-section-label">Alarma</div>
+        <div class="sub" style="margin-bottom:14px;">Cuánto tiempo suena, qué tan fuerte y qué sonido usa cuando nadie ha entrado a registrar. Se apaga antes si alguien toca la pantalla.</div>
         <div class="row-inline">
           <div class="field" style="margin-bottom:14px;">
             <label for="adminAlarmaDuracion">Duración (segundos)</label>
@@ -937,7 +941,19 @@
             </select>
           </div>
         </div>
-        <button class="btn-secondary admin-add-btn" id="adminGuardarAlarmaBtn">Guardar alarma</button>
+        <div class="field">
+          <label for="adminAlarmaSonido">Sonido</label>
+          <select id="adminAlarmaSonido" class="admin-input-lg">
+            <option value="clasico">Clásico (beeps)</option>
+            <option value="sirena">Sirena</option>
+            <option value="campana">Campana</option>
+            <option value="urgente">Urgente (rápido)</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" id="adminProbarSonidoBtn">🔊 Probar sonido</button>
+        </div>
+        <button class="btn-primary admin-add-btn" id="adminGuardarAlarmaBtn" style="margin-top:14px;">Guardar alarma</button>
       </div>
     </div>
   </div>
@@ -985,6 +1001,7 @@
   var loginHoraActual = document.getElementById("loginHoraActual");
   var loginProximaRonda = document.getElementById("loginProximaRonda");
   var turnoHintEl = document.getElementById("turnoHint");
+  var rondaCompletadaHintEl = document.getElementById("rondaCompletadaHint");
   var horarioEstadoEl = document.getElementById("horarioEstado");
 
   var adminOverlay = document.getElementById("adminOverlay");
@@ -1009,7 +1026,9 @@
   var adminGuardarTurnosBtn = document.getElementById("adminGuardarTurnosBtn");
   var adminAlarmaDuracion = document.getElementById("adminAlarmaDuracion");
   var adminAlarmaVolumen = document.getElementById("adminAlarmaVolumen");
+  var adminAlarmaSonido = document.getElementById("adminAlarmaSonido");
   var adminGuardarAlarmaBtn = document.getElementById("adminGuardarAlarmaBtn");
+  var adminProbarSonidoBtn = document.getElementById("adminProbarSonidoBtn");
 
   var USERS_KEY = "calidad_usuarios";
   var ADMIN_PIN_KEY = "calidad_admin_pin";
@@ -1205,14 +1224,21 @@
     loginPinView.classList.add("hidden");
     loginListView.classList.remove("hidden");
     renderUsuarios();
-    var claveObjetivo = rondaPendiente || claveRondaMasReciente(new Date());
-    var turno = turnoDeFranja(claveObjetivo);
-    if (rondasRegistradas.has(claveObjetivo)){
-      turnoHintEl.textContent = "✓ Ronda de las " + claveObjetivo + " ya registrada";
-      turnoHintEl.classList.remove("hidden");
-      turnoHintEl.disabled = true;
-      turnoHintEl.onclick = null;
-    } else if (turno){
+
+    var ahora = new Date();
+    var claveActual = rondaPendiente || claveRondaMasReciente(ahora);
+    var actualRegistrada = rondasRegistradas.has(claveActual);
+
+    if (actualRegistrada){
+      rondaCompletadaHintEl.textContent = "✓ Ronda de las " + claveActual + " ya registrada";
+      rondaCompletadaHintEl.classList.remove("hidden");
+    } else {
+      rondaCompletadaHintEl.classList.add("hidden");
+    }
+
+    var claveParaTurno = actualRegistrada ? claveRonda(siguienteMarca(ahora)) : claveActual;
+    var turno = turnoDeFranja(claveParaTurno);
+    if (turno){
       turnoHintEl.textContent = "Le toca a: " + turno;
       turnoHintEl.classList.remove("hidden");
       turnoHintEl.disabled = false;
@@ -1295,9 +1321,10 @@
       var cfg = JSON.parse(localStorage.getItem(ALARMA_KEY) || "null") || {};
       return {
         duracion: cfg.duracion || 30,
-        volumen: cfg.volumen || "fuerte"
+        volumen: cfg.volumen || "fuerte",
+        sonido: cfg.sonido || "clasico"
       };
-    }catch(e){ return { duracion: 30, volumen: "fuerte" }; }
+    }catch(e){ return { duracion: 30, volumen: "fuerte", sonido: "clasico" }; }
   }
 
   function guardarAlarmaConfig(obj){
@@ -1412,6 +1439,7 @@
     });
     document.getElementById("adminTabUsuarios").classList.toggle("hidden", tab !== "usuarios");
     document.getElementById("adminTabHorarios").classList.toggle("hidden", tab !== "horarios");
+    document.getElementById("adminTabAlarma").classList.toggle("hidden", tab !== "alarma");
   }
 
   document.querySelectorAll(".admin-tab-btn").forEach(function(btn){
@@ -1435,6 +1463,7 @@
       var a = cargarAlarmaConfig();
       adminAlarmaDuracion.value = a.duracion;
       adminAlarmaVolumen.value = a.volumen;
+      adminAlarmaSonido.value = a.sonido;
     } else {
       adminGateError.style.display = "block";
       adminGatePinValor = "";
@@ -1620,8 +1649,17 @@
   adminGuardarAlarmaBtn.addEventListener("click", function(){
     var duracion = parseInt(adminAlarmaDuracion.value, 10) || 30;
     duracion = Math.min(180, Math.max(5, duracion));
-    guardarAlarmaConfig({ duracion: duracion, volumen: adminAlarmaVolumen.value });
+    guardarAlarmaConfig({ duracion: duracion, volumen: adminAlarmaVolumen.value, sonido: adminAlarmaSonido.value });
     mostrarToast("Alarma guardada.");
+  });
+
+  adminProbarSonidoBtn.addEventListener("click", function(){
+    try{
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var pico = VOLUMENES[adminAlarmaVolumen.value] || VOLUMENES.fuerte;
+      var reproducir = SONIDOS[adminAlarmaSonido.value] || SONIDOS.clasico;
+      reproducir(ctx, pico);
+    }catch(e){ /* audio no disponible, se ignora */ }
   });
 
   function verificarDisparo(now){
@@ -1642,13 +1680,9 @@
     }
   }
 
-  function sonarAlerta(){
-    try{
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      var cfg = cargarAlarmaConfig();
-      var pico = VOLUMENES[cfg.volumen] || VOLUMENES.fuerte;
-      var tonos = [880, 660, 880, 660, 880, 660];
-      tonos.forEach(function(freq, i){
+  var SONIDOS = {
+    clasico: function(ctx, pico){
+      [880, 660, 880, 660, 880, 660].forEach(function(freq, i){
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
         osc.type = "square";
@@ -1660,6 +1694,58 @@
         osc.start(ctx.currentTime + i*0.18);
         osc.stop(ctx.currentTime + i*0.18 + 0.18);
       });
+    },
+    sirena: function(ctx, pico){
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = "sawtooth";
+      gain.gain.setValueAtTime(pico, ctx.currentTime);
+      gain.gain.setValueAtTime(pico, ctx.currentTime + 1.1);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+      osc.frequency.setValueAtTime(420, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(1000, ctx.currentTime + 0.55);
+      osc.frequency.linearRampToValueAtTime(420, ctx.currentTime + 1.1);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 1.2);
+    },
+    campana: function(ctx, pico){
+      [1046.5, 1318.5, 1568].forEach(function(freq, i){
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + i*0.16);
+        gain.gain.exponentialRampToValueAtTime(pico, ctx.currentTime + i*0.16 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i*0.16 + 0.55);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + i*0.16);
+        osc.stop(ctx.currentTime + i*0.16 + 0.55);
+      });
+    },
+    urgente: function(ctx, pico){
+      for (var i = 0; i < 8; i++){
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.value = 1046;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + i*0.1);
+        gain.gain.exponentialRampToValueAtTime(pico, ctx.currentTime + i*0.1 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i*0.1 + 0.08);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + i*0.1);
+        osc.stop(ctx.currentTime + i*0.1 + 0.1);
+      }
+    }
+  };
+
+  function sonarAlerta(){
+    try{
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var cfg = cargarAlarmaConfig();
+      var pico = VOLUMENES[cfg.volumen] || VOLUMENES.fuerte;
+      var reproducir = SONIDOS[cfg.sonido] || SONIDOS.clasico;
+      reproducir(ctx, pico);
     }catch(e){ /* audio no disponible, se ignora */ }
   }
 
