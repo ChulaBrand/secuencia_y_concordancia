@@ -1029,6 +1029,7 @@
 
   adminCerrarBtn.addEventListener("click", function(){
     adminOverlay.classList.add("hidden");
+    if (!loginOverlay.classList.contains("hidden")) mostrarListaUsuarios();
   });
 
   adminAgregarBtn.addEventListener("click", function(){
