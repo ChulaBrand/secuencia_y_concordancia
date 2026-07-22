@@ -4,50 +4,48 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inspección de Calidad — Registro cada 15 min</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --header-1:#7a0a54;
-    --header-2:#b3005f;
-    --page-bg:#fdf2f8;
+    --bg:#F7F5F0;
     --panel:#ffffff;
-    --panel-2:#fdf2f8;
-    --border:#f3d1e6;
-    --text:#2a1130;
-    --muted:#8a6280;
-    --ok:#16a34a;
-    --ok-bg:#dcfce7;
-    --bad:#dc2626;
-    --bad-bg:#fee2e2;
-    --accent:#e6007e;
-    --accent-dark:#b3005f;
-    --accent-2:#00b6b6;
-    --accent-2-dark:#00888a;
-    --highlight:#ffcb05;
+    --panel-2:#F7F5F0;
+    --border:rgba(0,0,0,0.10);
+    --text:#1a1a1a;
+    --muted:#6b7280;
+    --ok:#15803D;
+    --ok-bg:#F0FDF4;
+    --bad:#B91C1C;
+    --bad-bg:#FEF2F2;
+    --accent:#1B3A2D;
+    --accent-dark:#142B21;
+    --accent-2:#5B21B6;
+    --accent-2-dark:#4C1A99;
+    --radius:12px;
+    --radius-sm:8px;
   }
   :root[data-theme="dark"]{
-    --header-1:#170b1f;
-    --header-2:#241130;
-    --page-bg:#170b1f;
-    --panel:#241130;
-    --panel-2:#2f1740;
-    --border:#4a2a58;
-    --text:#f5e6f0;
-    --muted:#c9a8c4;
-    --ok:#22c55e;
-    --ok-bg:#123322;
-    --bad:#f87171;
-    --bad-bg:#3a1414;
-    --accent:#ff2f9e;
-    --accent-dark:#e6007e;
-    --accent-2:#22d3d3;
-    --accent-2-dark:#00b6b6;
-    --highlight:#ffcb05;
+    --bg:#16171A;
+    --panel:#232428;
+    --panel-2:#1B1C1F;
+    --border:rgba(255,255,255,0.11);
+    --text:#F2F1ED;
+    --muted:#A6A5A0;
+    --ok:#86EFAC;
+    --ok-bg:rgba(74,222,128,.15);
+    --bad:#FCA5A5;
+    --bad-bg:rgba(248,113,113,.15);
+    --accent:#2F6B4F;
+    --accent-dark:#255840;
+    --accent-2:#9163E8;
+    --accent-2-dark:#7C4FD1;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:linear-gradient(180deg,var(--header-1) 0%,var(--header-2) 260px,var(--page-bg) 260px);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
     color:var(--text);
     min-height:100vh;
     transition:background .2s,color .2s;
@@ -56,7 +54,7 @@
     max-width:960px;
     margin:0 auto;
     padding:28px 20px 10px;
-    color:#fff;
+    color:var(--text);
   }
   header h1{
     margin:0 0 4px;
@@ -65,10 +63,12 @@
   }
   header p{
     margin:0;
-    color:#f0c6de;
+    color:var(--muted);
     font-size:14px;
   }
   .header-top{
+    position:relative;
+    z-index:61;
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
@@ -79,32 +79,35 @@
     display:flex;
     align-items:center;
     gap:8px;
-    background:rgba(255,255,255,0.1);
-    border:1px solid rgba(255,255,255,0.18);
+    background:var(--panel);
+    border:1px solid var(--border);
     border-radius:999px;
     padding:6px 8px 6px 14px;
     font-size:13px;
-    color:#fff;
+    color:var(--text);
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
   }
   .session-badge button{
-    background:rgba(255,255,255,0.15);
-    color:#fff;
+    background:var(--panel-2);
+    color:var(--text);
     padding:5px 11px;
     border-radius:999px;
     font-size:12px;
+    border:1px solid var(--border);
   }
-  .session-badge button:hover{ background:rgba(255,255,255,0.28); }
+  .session-badge button:hover{ background:var(--border); }
   #themeToggle{
     display:flex;
     align-items:center;
     gap:6px;
-    background:rgba(255,255,255,0.12);
-    border:1px solid rgba(255,255,255,0.2);
-    color:#fff;
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text);
     border-radius:999px;
     padding:7px 14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
   }
-  #themeToggle:hover{ background:rgba(255,255,255,0.22); }
+  #themeToggle:hover{ background:var(--panel-2); }
   .clock-row{
     display:flex;
     gap:16px;
@@ -112,16 +115,17 @@
     flex-wrap:wrap;
   }
   .clock-card{
-    background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.1);
-    border-radius:12px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius,12px);
     padding:14px 20px;
     flex:1;
     min-width:180px;
+    box-shadow:0 1px 3px rgba(0,0,0,.03);
   }
   .clock-card .label{
     font-size:12px;
-    color:#f0c6de;
+    color:var(--muted);
     text-transform:uppercase;
     letter-spacing:.04em;
   }
@@ -130,7 +134,8 @@
     font-weight:700;
     margin-top:4px;
     font-variant-numeric:tabular-nums;
-    color:var(--accent-2);
+    color:var(--accent);
+    font-family:'IBM Plex Mono',monospace;
   }
   main{
     max-width:960px;
@@ -244,7 +249,7 @@
   #loginOverlay{
     position:fixed;
     inset:0;
-    background:linear-gradient(180deg,var(--header-1),var(--header-2));
+    background:rgba(15,23,42,0.6);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -253,7 +258,7 @@
   }
   #loginOverlay.hidden{ display:none; }
   @keyframes alertaFlash{
-    0%,100%{ background:linear-gradient(180deg,var(--header-1),var(--header-2)); }
+    0%,100%{ background:rgba(15,23,42,0.6); }
     50%{ background:var(--bad); }
   }
   #loginOverlay.alerta{ animation:alertaFlash .9s ease-in-out infinite; }
@@ -287,17 +292,18 @@
     width:34px;
     height:34px;
     border-radius:50%;
-    background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.12);
-    color:rgba(255,255,255,0.3);
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--muted);
     font-size:15px;
     display:flex;
     align-items:center;
     justify-content:center;
     z-index:65;
+    box-shadow:0 1px 4px rgba(0,0,0,.1);
     transition:background .15s,color .15s;
   }
-  .admin-fab:hover{ background:rgba(255,255,255,0.18); color:rgba(255,255,255,0.85); }
+  .admin-fab:hover{ background:var(--panel-2); color:var(--text); }
   #adminOverlay{
     position:fixed;
     inset:0;
@@ -507,7 +513,7 @@
   #loginCard{
     background:var(--panel);
     border-radius:16px;
-    max-width:420px;
+    max-width:640px;
     width:100%;
     max-height:88vh;
     overflow:hidden;
@@ -574,28 +580,30 @@
     border:1px solid var(--border);
   }
   #listaUsuarios{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px;
     margin-bottom:18px;
-    max-height:280px;
-    overflow-y:auto;
   }
   .usuario-btn{
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
+    gap:6px;
     width:100%;
-    text-align:left;
-    background:var(--panel-2);
+    text-align:center;
+    background:var(--panel);
     border:1.5px solid var(--border);
-    border-radius:10px;
-    padding:12px 14px;
+    border-radius:var(--radius,12px);
+    padding:18px 10px;
     font-size:15px;
-    font-weight:600;
+    font-weight:700;
     color:var(--text);
+    transition:border-color .15s,box-shadow .15s,transform .1s;
   }
-  .usuario-btn:hover{ background:var(--border); }
+  .usuario-btn:hover{ border-color:var(--accent-2); box-shadow:0 6px 16px rgba(91,33,182,.10); }
+  .usuario-btn:active{ transform:scale(.97); }
   .usuario-quitar{
     background:transparent;
     border:none;
@@ -1231,7 +1239,7 @@
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "usuario-btn";
-      btn.innerHTML = "<span>" + escapeHtml(u.nombre) + "</span>";
+      btn.innerHTML = "<span style=\"font-size:22px;\">👤</span><span>" + escapeHtml(u.nombre) + "</span>";
       btn.addEventListener("click", function(){
         mostrarPinView(u.nombre);
       });
