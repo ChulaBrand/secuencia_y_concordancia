@@ -339,14 +339,15 @@
   }
   .toggle-pair{
     display:flex;
-    gap:8px;
+    gap:10px;
   }
   .toggle-btn{
     flex:1;
     padding:10px 10px;
-    border-radius:8px;
-    border:1px solid var(--border);
-    background:var(--panel-2);
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:var(--panel);
+    box-shadow:0 1px 2px rgba(0,0,0,0.05);
     color:var(--text);
     font-weight:700;
     font-size:20px;
@@ -454,17 +455,16 @@
 
 <main>
 
+  <input type="hidden" id="inspectorName">
+
   <div class="card">
-    <h2>Configuración</h2>
-    <div class="row-inline">
-      <div class="field">
-        <label for="inspectorName">Inspector / turno</label>
-        <input id="inspectorName" type="text" placeholder="Ej: Roberto — Turno 1">
-      </div>
-      <div class="field">
-        <label for="sheetsUrl">URL del Web App de Google Sheets (opcional)</label>
-        <input id="sheetsUrl" type="text" value="https://script.google.com/macros/s/AKfycbyHf5fvYuOn8Ti4hcRHr0sxMFAx28AMWPpgbhacQlpRvAxQPM0hfCaZCGB6OWYSp-B-ng/exec" placeholder="Pega aquí la URL que te da Google Apps Script">
-      </div>
+    <h2>Conexión con Google Sheets</h2>
+    <p class="footer-note" style="margin-bottom:12px;">
+      Esta es la dirección donde se guardan permanentemente los registros. Ya viene configurada; normalmente no necesitas tocarla. Usa "Enviar registro de prueba" para confirmar que está funcionando.
+    </p>
+    <div class="field">
+      <label for="sheetsUrl">URL del Web App de Google Sheets</label>
+      <input id="sheetsUrl" type="text" value="https://script.google.com/macros/s/AKfycbyHf5fvYuOn8Ti4hcRHr0sxMFAx28AMWPpgbhacQlpRvAxQPM0hfCaZCGB6OWYSp-B-ng/exec" placeholder="Pega aquí la URL que te da Google Apps Script">
     </div>
     <div class="btn-row">
       <button class="btn-secondary" id="testConnBtn">Enviar registro de prueba</button>
