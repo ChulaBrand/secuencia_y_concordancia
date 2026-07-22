@@ -67,8 +67,6 @@
     font-size:14px;
   }
   .header-top{
-    position:relative;
-    z-index:61;
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
@@ -97,6 +95,10 @@
   }
   .session-badge button:hover{ background:var(--border); }
   #themeToggle{
+    position:fixed;
+    top:14px;
+    right:14px;
+    z-index:65;
     display:flex;
     align-items:center;
     gap:6px;
@@ -105,7 +107,7 @@
     color:var(--text);
     border-radius:999px;
     padding:7px 14px;
-    box-shadow:0 1px 4px rgba(0,0,0,.06);
+    box-shadow:0 1px 4px rgba(0,0,0,.1);
   }
   #themeToggle:hover{ background:var(--panel-2); }
   .clock-row{
@@ -208,43 +210,6 @@
   }
   .btn-secondary:hover{ background:var(--border); }
   .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-  table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:13px;
-  }
-  th,td{
-    text-align:left;
-    padding:8px 10px;
-    border-bottom:1px solid var(--border);
-  }
-  th{
-    color:var(--muted);
-    font-weight:600;
-    font-size:12px;
-    text-transform:uppercase;
-    letter-spacing:.03em;
-  }
-  .badge{
-    display:inline-flex;
-    align-items:center;
-    gap:5px;
-    padding:3px 9px;
-    border-radius:999px;
-    font-size:12px;
-    font-weight:600;
-  }
-  .badge-ok{ background:var(--ok-bg); color:var(--ok); }
-  .badge-bad{ background:var(--bad-bg); color:var(--bad); }
-  .badge-dot{
-    width:7px;height:7px;border-radius:50%;background:currentColor;
-  }
-  .empty{
-    color:var(--muted);
-    font-size:13px;
-    padding:20px 0;
-    text-align:center;
-  }
   .hidden{ display:none; }
   #loginOverlay{
     position:fixed;
@@ -848,26 +813,9 @@
     </div>
   </div>
 
-  <div class="card">
-    <h2>Historial de rondas</h2>
-    <table id="tablaHistorial">
-      <thead>
-        <tr>
-          <th>Hora ronda</th>
-          <th>Hora real</th>
-          <th>Muestra</th>
-          <th>Secuencia</th>
-          <th>Concordancia</th>
-          <th>Observación</th>
-        </tr>
-      </thead>
-      <tbody id="historialBody"></tbody>
-    </table>
-    <div class="empty" id="historialVacio">Todavía no hay registros en esta sesión.</div>
-    <p class="footer-note">
-      El historial de esta tabla vive mientras la página esté abierta (no se guarda al recargar). Lo que sí queda guardado de forma permanente es lo que se envía a Google Sheets.
-    </p>
-  </div>
+  <p class="footer-note" style="text-align:center; margin-top:4px;">
+    Lo que se registra se envía y queda guardado de forma permanente en Google Sheets.
+  </p>
 
 </main>
 
@@ -996,7 +944,6 @@
 (function(){
   "use strict";
 
-  var historial = [];          // {horaRonda, muestra, secuencia, concordancia, observacion, inspector, ts}
   var rondasRegistradas = new Set(); // claves "HH:MM" ya guardadas, para no duplicar
   var ultimaClaveDisparada = null;
   var horaRondaActualValor = null;
@@ -1009,8 +956,6 @@
   var rondaHoraNominal = document.getElementById("rondaHoraNominal");
   var rondaHoraReal = document.getElementById("rondaHoraReal");
   var rondaVolverBtn = document.getElementById("rondaVolverBtn");
-  var historialBody = document.getElementById("historialBody");
-  var historialVacio = document.getElementById("historialVacio");
   var toastEl = document.getElementById("toast");
   var loginOverlay = document.getElementById("loginOverlay");
   var loginListView = document.getElementById("loginListView");
@@ -1798,21 +1743,6 @@
     var ahora = new Date();
     var horaReal = pad(ahora.getHours()) + ":" + pad(ahora.getMinutes()) + ":" + pad(ahora.getSeconds());
 
-    registros.forEach(function(r){
-      var registro = {
-        horaRonda: claveHora,
-        horaReal: horaReal,
-        muestra: r.muestra,
-        secuencia: r.secuencia,
-        concordancia: r.concordancia,
-        observacion: r.observacion,
-        inspector: inspector,
-        fecha: ahora.toISOString().slice(0,10),
-        timestamp: ahora.toISOString()
-      };
-      historial.unshift(registro);
-    });
-
     rondasRegistradas.add(claveHora);
     renderHistorial();
     enviarAGoogleSheets(claveHora, inspector, registros, ahora, horaReal);
@@ -1821,27 +1751,7 @@
   });
 
   function renderHistorial(){
-    historialBody.innerHTML = "";
-    historialVacio.style.display = historial.length ? "none" : "block";
     contadorEl.textContent = rondasRegistradas.size;
-
-    historial.forEach(function(r){
-      var tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td>" + r.horaRonda + "</td>" +
-        "<td>" + (r.horaReal || "—") + "</td>" +
-        "<td>Muestra " + r.muestra + "</td>" +
-        "<td>" + badge(r.secuencia) + "</td>" +
-        "<td>" + badge(r.concordancia) + "</td>" +
-        "<td>" + (r.observacion || "—") + "</td>";
-      historialBody.appendChild(tr);
-    });
-  }
-
-  function badge(valor){
-    var ok = valor === "OK";
-    return '<span class="badge ' + (ok ? "badge-ok" : "badge-bad") + '">' +
-      '<span class="badge-dot"></span>' + valor + '</span>';
   }
 
   function mostrarToast(msg){
