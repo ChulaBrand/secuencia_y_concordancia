@@ -429,6 +429,43 @@
     font-size:16px;
     font-family:inherit;
   }
+  .admin-turno-fila{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .admin-turno-label{
+    font-weight:700;
+    font-size:16px;
+    min-width:50px;
+  }
+  .admin-turno-select{
+    flex:1;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:15px;
+    font-family:inherit;
+  }
+  .turno-hint{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:14px;
+  }
+  .horario-estado{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+  .horario-estado.fuera{ color:var(--bad); }
   #loginCard{
     background:var(--panel);
     border-radius:16px;
@@ -484,76 +521,103 @@
     font-size:13px;
     margin-bottom:4px;
   }
-  #rondaRows{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-  }
-  @media (max-width:640px){
-    #rondaRows{ grid-template-columns:1fr; }
-  }
-  .muestra-block{
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:12px 14px;
-  }
-  .muestra-block .m-title{
-    font-weight:600;
-    font-size:14px;
-    margin-bottom:10px;
-  }
-  .indicador-group{
+  .ronda-horas{
     display:flex;
-    gap:20px;
+    gap:12px;
+    margin-bottom:18px;
     flex-wrap:wrap;
+  }
+  .ronda-horas > div{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 14px;
+    flex:1;
+    min-width:140px;
+  }
+  .ronda-hora-label{
+    display:block;
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .ronda-hora-valor{
+    display:block;
+    font-size:18px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    color:var(--accent-2);
+  }
+  .muestra-row{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 14px;
     margin-bottom:8px;
   }
-  .indicador{
-    flex:1;
-    min-width:220px;
-  }
-  .indicador > .ind-label{
-    font-size:12px;
-    color:var(--muted);
-    margin-bottom:6px;
-  }
-  .toggle-pair{
+  .muestra-row-main{
     display:flex;
-    gap:10px;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
   }
-  .toggle-btn{
-    flex:1;
-    padding:10px 10px;
-    border-radius:10px;
+  .muestra-row-nombre{
+    font-weight:700;
+    font-size:14px;
+    min-width:78px;
+  }
+  .mini-toggle-group{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .mini-label{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    min-width:66px;
+  }
+  .mini-toggle{
+    width:38px;
+    height:38px;
+    border-radius:8px;
     border:1.5px solid var(--border);
     background:var(--panel);
-    box-shadow:0 1px 2px rgba(0,0,0,0.05);
     color:var(--text);
     font-weight:700;
-    font-size:20px;
+    font-size:17px;
     line-height:1;
-    transition:all .1s;
+    padding:0;
   }
-  .toggle-btn.ok.selected{
+  .mini-toggle.ok.selected{
     background:var(--ok);
     border-color:var(--ok);
     color:#fff;
   }
-  .toggle-btn.bad.selected{
+  .mini-toggle.bad.selected{
     background:var(--bad);
     border-color:var(--bad);
     color:#fff;
   }
-  .obs-field{
+  .comentario-toggle{
+    margin-left:auto;
+    width:38px;
+    height:38px;
+    border-radius:8px;
+    border:1.5px solid var(--border);
+    background:var(--panel);
+    font-size:16px;
+    padding:0;
+  }
+  .comentario-toggle.tiene-texto{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .obs-field-mini{
     margin-top:10px;
   }
-  .obs-field label{
-    display:block;
-    font-size:12px;
-    color:var(--muted);
-    margin-bottom:4px;
-  }
-  .obs-field textarea{
+  .obs-field-mini textarea{
     width:100%;
     border:1px solid var(--border);
     border-radius:8px;
@@ -561,7 +625,7 @@
     font-family:inherit;
     font-size:13px;
     resize:vertical;
-    min-height:36px;
+    min-height:50px;
     background:var(--panel-2);
     color:var(--text);
   }
@@ -632,7 +696,17 @@
   <input type="hidden" id="sheetsUrl" value="https://script.google.com/macros/s/AKfycbyHf5fvYuOn8Ti4hcRHr0sxMFAx28AMWPpgbhacQlpRvAxQPM0hfCaZCGB6OWYSp-B-ng/exec">
 
   <div class="card">
-    <h2 id="rondaTitulo">Ronda de las --:--</h2>
+    <h2>Registro de ronda</h2>
+    <div class="ronda-horas">
+      <div>
+        <span class="ronda-hora-label">Hora ronda</span>
+        <span class="ronda-hora-valor" id="rondaHoraNominal">--:--</span>
+      </div>
+      <div>
+        <span class="ronda-hora-label">Hora real</span>
+        <span class="ronda-hora-valor" id="rondaHoraReal">--:--:--</span>
+      </div>
+    </div>
     <div class="sub">Marca Secuencia y Concordancia para cada muestra. Guarda cuando termines.</div>
     <div id="rondaRows"></div>
     <div id="rondaError">Falta marcar Secuencia y/o Concordancia en alguna muestra.</div>
@@ -647,6 +721,7 @@
       <thead>
         <tr>
           <th>Hora ronda</th>
+          <th>Hora real</th>
           <th>Muestra</th>
           <th>Secuencia</th>
           <th>Concordancia</th>
@@ -672,6 +747,8 @@
       </div>
       <h2>¿Quién va a llenar esta ronda?</h2>
       <div class="sub">Toca tu nombre e ingresa tu PIN. Al terminar de registrar, vuelves aquí para que entre el siguiente.</div>
+      <div id="turnoHint" class="turno-hint hidden"></div>
+      <div id="horarioEstado" class="horario-estado hidden"></div>
       <div id="listaUsuarios"></div>
     </div>
     <div id="loginPinView" class="hidden">
@@ -719,6 +796,27 @@
 
       <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
 
+      <div class="admin-section-label">Horario de operación</div>
+      <div class="sub" style="margin-bottom:14px;">Fuera de este horario no sonará la alarma automática. Dejar vacío = siempre activa.</div>
+      <div class="row-inline">
+        <div class="field" style="margin-bottom:14px;">
+          <label for="adminHoraInicio">Desde</label>
+          <input id="adminHoraInicio" type="time" class="admin-input-lg" style="margin-bottom:0;">
+        </div>
+        <div class="field" style="margin-bottom:14px;">
+          <label for="adminHoraFin">Hasta</label>
+          <input id="adminHoraFin" type="time" class="admin-input-lg" style="margin-bottom:0;">
+        </div>
+      </div>
+      <button class="btn-secondary admin-add-btn" id="adminGuardarHorarioBtn">Guardar horario</button>
+
+      <div class="admin-section-label" style="margin-top:26px;">Turnos por franja</div>
+      <div class="sub" style="margin-bottom:14px;">Indica quién debería llenar cada franja de 15 minutos. Es una guía: se muestra en el panel de entrada, pero cualquier usuario puede seguir registrando.</div>
+      <div id="adminTurnos"></div>
+      <button class="btn-secondary admin-add-btn" id="adminGuardarTurnosBtn">Guardar turnos</button>
+
+      <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
+
       <div class="field">
         <label for="adminNuevoPinMaestro">Cambiar PIN de administrador</label>
         <input id="adminNuevoPinMaestro" type="password" inputmode="numeric" maxlength="8" placeholder="Nuevo PIN de administrador" autocomplete="off">
@@ -750,9 +848,10 @@
   var relojEl = document.getElementById("relojActual");
   var proximaEl = document.getElementById("proximaRonda");
   var contadorEl = document.getElementById("contadorRondas");
-  var rondaTitulo = document.getElementById("rondaTitulo");
   var rondaRows = document.getElementById("rondaRows");
   var rondaError = document.getElementById("rondaError");
+  var rondaHoraNominal = document.getElementById("rondaHoraNominal");
+  var rondaHoraReal = document.getElementById("rondaHoraReal");
   var historialBody = document.getElementById("historialBody");
   var historialVacio = document.getElementById("historialVacio");
   var toastEl = document.getElementById("toast");
@@ -774,6 +873,8 @@
   var listaUsuariosEl = document.getElementById("listaUsuarios");
   var loginHoraActual = document.getElementById("loginHoraActual");
   var loginProximaRonda = document.getElementById("loginProximaRonda");
+  var turnoHintEl = document.getElementById("turnoHint");
+  var horarioEstadoEl = document.getElementById("horarioEstado");
 
   var adminOverlay = document.getElementById("adminOverlay");
   var adminGateView = document.getElementById("adminGateView");
@@ -789,11 +890,18 @@
   var adminNuevoPinMaestro = document.getElementById("adminNuevoPinMaestro");
   var adminGuardarPinMaestroBtn = document.getElementById("adminGuardarPinMaestroBtn");
   var adminCerrarBtn = document.getElementById("adminCerrarBtn");
+  var adminHoraInicio = document.getElementById("adminHoraInicio");
+  var adminHoraFin = document.getElementById("adminHoraFin");
+  var adminGuardarHorarioBtn = document.getElementById("adminGuardarHorarioBtn");
+  var adminTurnosEl = document.getElementById("adminTurnos");
+  var adminGuardarTurnosBtn = document.getElementById("adminGuardarTurnosBtn");
 
   var USERS_KEY = "calidad_usuarios";
   var ADMIN_PIN_KEY = "calidad_admin_pin";
   var DEFAULT_ADMIN_PIN = "1234";
   var THEME_KEY = "calidad_theme";
+  var HORARIO_KEY = "calidad_horario";
+  var TURNOS_KEY = "calidad_turnos";
   var rondaPendiente = null;
   var pinObjetivo = null;
   var alarmaInterval = null;
@@ -881,6 +989,14 @@
     loginPinView.classList.add("hidden");
     loginListView.classList.remove("hidden");
     renderUsuarios();
+    var claveObjetivo = rondaPendiente || claveRondaMasReciente(new Date());
+    var turno = turnoDeFranja(claveObjetivo);
+    if (turno){
+      turnoHintEl.textContent = "Le toca a: " + turno;
+      turnoHintEl.classList.remove("hidden");
+    } else {
+      turnoHintEl.classList.add("hidden");
+    }
   }
 
   function mostrarPinView(nombre){
@@ -1017,6 +1133,7 @@
       card.querySelector(".admin-quitar-usuario").addEventListener("click", function(){
         guardarUsuarios(cargarUsuarios().filter(function(x){ return x.nombre !== u.nombre; }));
         renderAdminUsuarios();
+        renderAdminTurnos();
       });
 
       adminListaUsuariosEl.appendChild(card);
@@ -1040,6 +1157,10 @@
       adminGateView.classList.add("hidden");
       adminPanelView.classList.remove("hidden");
       renderAdminUsuarios();
+      renderAdminTurnos();
+      var h = cargarHorario();
+      adminHoraInicio.value = h.inicio || "";
+      adminHoraFin.value = h.fin || "";
     } else {
       adminGateError.style.display = "block";
       adminGatePin.value = "";
@@ -1077,6 +1198,7 @@
     adminNuevoNombre.value = "";
     adminNuevoPin.value = "";
     renderAdminUsuarios();
+    renderAdminTurnos();
     mostrarToast("Usuario agregado.");
   });
 
@@ -1114,6 +1236,8 @@
     proximaEl.textContent = proximaTexto;
     loginHoraActual.textContent = horaTexto;
     loginProximaRonda.textContent = proximaTexto;
+    if (rondaHoraReal) rondaHoraReal.textContent = horaTexto;
+    actualizarEstadoHorario(now);
     verificarDisparo(now);
   }
 
@@ -1124,10 +1248,107 @@
     return claveRonda(floor);
   }
 
+  // ---- Horario de operación ----
+  function cargarHorario(){
+    try{ return JSON.parse(localStorage.getItem(HORARIO_KEY) || "null") || { inicio: "", fin: "" }; }
+    catch(e){ return { inicio: "", fin: "" }; }
+  }
+
+  function guardarHorario(obj){
+    localStorage.setItem(HORARIO_KEY, JSON.stringify(obj));
+  }
+
+  function dentroDeHorario(now){
+    var h = cargarHorario();
+    if (!h.inicio || !h.fin) return true;
+    var actual = pad(now.getHours()) + ":" + pad(now.getMinutes());
+    if (h.inicio <= h.fin){
+      return actual >= h.inicio && actual < h.fin;
+    }
+    return actual >= h.inicio || actual < h.fin;
+  }
+
+  function actualizarEstadoHorario(now){
+    var h = cargarHorario();
+    if (!h.inicio || !h.fin){
+      horarioEstadoEl.classList.add("hidden");
+      return;
+    }
+    horarioEstadoEl.classList.remove("hidden");
+    if (dentroDeHorario(now)){
+      horarioEstadoEl.classList.remove("fuera");
+      horarioEstadoEl.textContent = "Horario de operación: " + h.inicio + " a " + h.fin + " (activo ahora)";
+    } else {
+      horarioEstadoEl.classList.add("fuera");
+      horarioEstadoEl.textContent = "Fuera de horario de operación (" + h.inicio + " a " + h.fin + ") — la alarma automática está en pausa.";
+    }
+  }
+
+  adminGuardarHorarioBtn.addEventListener("click", function(){
+    guardarHorario({ inicio: adminHoraInicio.value, fin: adminHoraFin.value });
+    mostrarToast("Horario guardado.");
+  });
+
+  // ---- Turnos por franja ----
+  function cargarTurnos(){
+    try{ return JSON.parse(localStorage.getItem(TURNOS_KEY) || "{}"); }
+    catch(e){ return {}; }
+  }
+
+  function guardarTurnos(obj){
+    localStorage.setItem(TURNOS_KEY, JSON.stringify(obj));
+  }
+
+  function turnoDeFranja(claveHora){
+    var franja = claveHora.split(":")[1];
+    var turnos = cargarTurnos();
+    return turnos[franja] || "";
+  }
+
+  function renderAdminTurnos(){
+    var usuarios = cargarUsuarios();
+    var turnos = cargarTurnos();
+    adminTurnosEl.innerHTML = "";
+    ["00", "15", "30", "45"].forEach(function(franja){
+      var fila = document.createElement("div");
+      fila.className = "admin-turno-fila";
+      fila.dataset.franja = franja;
+      var label = document.createElement("span");
+      label.className = "admin-turno-label";
+      label.textContent = ":" + franja;
+      var select = document.createElement("select");
+      select.className = "admin-turno-select";
+      var optVacio = document.createElement("option");
+      optVacio.value = "";
+      optVacio.textContent = "— Sin asignar —";
+      select.appendChild(optVacio);
+      usuarios.forEach(function(u){
+        var opt = document.createElement("option");
+        opt.value = u.nombre;
+        opt.textContent = u.nombre;
+        if (turnos[franja] === u.nombre) opt.selected = true;
+        select.appendChild(opt);
+      });
+      fila.appendChild(label);
+      fila.appendChild(select);
+      adminTurnosEl.appendChild(fila);
+    });
+  }
+
+  adminGuardarTurnosBtn.addEventListener("click", function(){
+    var turnos = {};
+    adminTurnosEl.querySelectorAll(".admin-turno-fila").forEach(function(fila){
+      var valor = fila.querySelector("select").value;
+      if (valor) turnos[fila.dataset.franja] = valor;
+    });
+    guardarTurnos(turnos);
+    mostrarToast("Turnos guardados.");
+  });
+
   function verificarDisparo(now){
     var minuto = now.getMinutes();
     var segundo = now.getSeconds();
-    if (minuto % 15 === 0 && segundo < 5){
+    if (minuto % 15 === 0 && segundo < 5 && dentroDeHorario(now)){
       var clave = claveRonda(now);
       if (clave !== ultimaClaveDisparada && !rondasRegistradas.has(clave)){
         ultimaClaveDisparada = clave;
@@ -1163,33 +1384,29 @@
 
   function crearFilaMuestra(numero){
     var wrap = document.createElement("div");
-    wrap.className = "muestra-block";
+    wrap.className = "muestra-row";
     wrap.dataset.muestra = numero;
     wrap.innerHTML =
-      '<div class="m-title">Muestra ' + numero + '</div>' +
-      '<div class="indicador-group">' +
-        '<div class="indicador" data-tipo="secuencia">' +
-          '<div class="ind-label">Secuencia</div>' +
-          '<div class="toggle-pair">' +
-            '<button type="button" class="toggle-btn ok" data-val="OK" aria-label="Correcto">✓</button>' +
-            '<button type="button" class="toggle-btn bad" data-val="No OK" aria-label="Incorrecto">✗</button>' +
-          '</div>' +
+      '<div class="muestra-row-main">' +
+        '<span class="muestra-row-nombre">Muestra ' + numero + '</span>' +
+        '<div class="mini-toggle-group" data-tipo="secuencia">' +
+          '<span class="mini-label">Secuencia</span>' +
+          '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Correcto">✓</button>' +
+          '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Incorrecto">✗</button>' +
         '</div>' +
-        '<div class="indicador" data-tipo="concordancia">' +
-          '<div class="ind-label">Concordancia</div>' +
-          '<div class="toggle-pair">' +
-            '<button type="button" class="toggle-btn ok" data-val="OK" aria-label="Correcto">✓</button>' +
-            '<button type="button" class="toggle-btn bad" data-val="No OK" aria-label="Incorrecto">✗</button>' +
-          '</div>' +
+        '<div class="mini-toggle-group" data-tipo="concordancia">' +
+          '<span class="mini-label">Concordancia</span>' +
+          '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Correcto">✓</button>' +
+          '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Incorrecto">✗</button>' +
         '</div>' +
+        '<button type="button" class="comentario-toggle" title="Agregar comentario" aria-label="Agregar comentario">💬</button>' +
       '</div>' +
-      '<div class="obs-field">' +
-        '<label>Comentario (opcional)</label>' +
-        '<textarea placeholder="¿Algo que anotar sobre esta muestra?"></textarea>' +
+      '<div class="obs-field-mini hidden">' +
+        '<textarea placeholder="Comentario sobre esta muestra..."></textarea>' +
       '</div>';
 
-    wrap.querySelectorAll(".indicador").forEach(function(ind){
-      var botones = ind.querySelectorAll(".toggle-btn");
+    wrap.querySelectorAll(".mini-toggle-group").forEach(function(ind){
+      var botones = ind.querySelectorAll(".mini-toggle");
       botones.forEach(function(btn){
         btn.addEventListener("click", function(){
           botones.forEach(function(b){ b.classList.remove("selected"); });
@@ -1199,12 +1416,25 @@
       });
     });
 
+    var comentarioBtn = wrap.querySelector(".comentario-toggle");
+    var obsField = wrap.querySelector(".obs-field-mini");
+    var textarea = obsField.querySelector("textarea");
+    comentarioBtn.addEventListener("click", function(){
+      obsField.classList.toggle("hidden");
+      if (!obsField.classList.contains("hidden")){
+        setTimeout(function(){ textarea.focus(); }, 30);
+      }
+    });
+    textarea.addEventListener("input", function(){
+      comentarioBtn.classList.toggle("tiene-texto", textarea.value.trim().length > 0);
+    });
+
     return wrap;
   }
 
   function iniciarRonda(claveHora){
     horaRondaActualValor = claveHora;
-    rondaTitulo.textContent = "Ronda de las " + claveHora;
+    rondaHoraNominal.textContent = claveHora;
     rondaRows.innerHTML = "";
     for (var i = 1; i <= 4; i++){
       rondaRows.appendChild(crearFilaMuestra(i));
@@ -1213,13 +1443,13 @@
   }
 
   document.getElementById("guardarBtn").addEventListener("click", function(){
-    var bloques = rondaRows.querySelectorAll(".muestra-block");
+    var bloques = rondaRows.querySelectorAll(".muestra-row");
     var registros = [];
     var incompleto = false;
 
     bloques.forEach(function(b){
-      var secSel = b.querySelector('[data-tipo="secuencia"] .toggle-btn.selected');
-      var conSel = b.querySelector('[data-tipo="concordancia"] .toggle-btn.selected');
+      var secSel = b.querySelector('[data-tipo="secuencia"] .mini-toggle.selected');
+      var conSel = b.querySelector('[data-tipo="concordancia"] .mini-toggle.selected');
       if (!secSel || !conSel){
         incompleto = true;
         return;
@@ -1245,10 +1475,12 @@
 
     var claveHora = horaRondaActualValor;
     var ahora = new Date();
+    var horaReal = pad(ahora.getHours()) + ":" + pad(ahora.getMinutes()) + ":" + pad(ahora.getSeconds());
 
     registros.forEach(function(r){
       var registro = {
         horaRonda: claveHora,
+        horaReal: horaReal,
         muestra: r.muestra,
         secuencia: r.secuencia,
         concordancia: r.concordancia,
@@ -1262,7 +1494,7 @@
 
     rondasRegistradas.add(claveHora);
     renderHistorial();
-    enviarAGoogleSheets(claveHora, inspector, registros, ahora);
+    enviarAGoogleSheets(claveHora, inspector, registros, ahora, horaReal);
     mostrarToast("Enviado ✓ (" + claveHora + ")");
     cerrarSesion();
   });
@@ -1276,6 +1508,7 @@
       var tr = document.createElement("tr");
       tr.innerHTML =
         "<td>" + r.horaRonda + "</td>" +
+        "<td>" + (r.horaReal || "—") + "</td>" +
         "<td>Muestra " + r.muestra + "</td>" +
         "<td>" + badge(r.secuencia) + "</td>" +
         "<td>" + badge(r.concordancia) + "</td>" +
@@ -1296,12 +1529,13 @@
     setTimeout(function(){ toastEl.classList.remove("show"); }, 2600);
   }
 
-  function enviarAGoogleSheets(claveHora, inspector, registros, ahora){
+  function enviarAGoogleSheets(claveHora, inspector, registros, ahora, horaReal){
     var url = document.getElementById("sheetsUrl").value.trim();
     if (!url) return;
     var payload = {
       fecha: ahora.toISOString().slice(0,10),
       horaRonda: claveHora,
+      horaReal: horaReal || "",
       inspector: inspector,
       registros: registros
     };
