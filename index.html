@@ -549,6 +549,23 @@
     font-variant-numeric:tabular-nums;
     color:var(--accent-2);
   }
+  .muestra-header{
+    display:grid;
+    grid-template-columns:84px 1fr 1fr 60px;
+    gap:14px;
+    padding:0 14px;
+    margin-bottom:6px;
+  }
+  .muestra-header span{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    font-weight:700;
+  }
+  @media (max-width:560px){
+    .muestra-header{ display:none; }
+  }
   .muestra-row{
     border:1px solid var(--border);
     border-radius:10px;
@@ -556,30 +573,37 @@
     margin-bottom:6px;
   }
   .muestra-row-main{
-    display:flex;
+    display:grid;
+    grid-template-columns:84px 1fr 1fr 60px;
     align-items:center;
-    gap:18px;
-    flex-wrap:wrap;
+    gap:14px;
+  }
+  @media (max-width:560px){
+    .muestra-row-main{
+      grid-template-columns:1fr 1fr;
+      grid-template-areas:
+        "nombre nombre"
+        "sec conc"
+        "com com";
+      row-gap:8px;
+    }
+    .muestra-row-nombre{ grid-area:nombre; }
+    .mini-toggle-group:nth-of-type(1){ grid-area:sec; }
+    .mini-toggle-group:nth-of-type(2){ grid-area:conc; }
+    .comentario-toggle{ grid-area:com; margin-left:0; width:100%; }
   }
   .muestra-row-nombre{
     font-weight:700;
     font-size:15px;
-    min-width:78px;
   }
   .mini-toggle-group{
     display:flex;
     align-items:center;
     gap:8px;
   }
-  .mini-label{
-    font-size:11px;
-    color:var(--muted);
-    text-transform:uppercase;
-    letter-spacing:.03em;
-    min-width:66px;
-  }
   .mini-toggle{
-    width:52px;
+    width:100%;
+    max-width:70px;
     height:52px;
     border-radius:10px;
     border:1.5px solid var(--border);
@@ -601,7 +625,6 @@
     color:#fff;
   }
   .comentario-toggle{
-    margin-left:auto;
     width:52px;
     height:52px;
     border-radius:10px;
@@ -609,6 +632,11 @@
     background:var(--panel);
     font-size:20px;
     padding:0;
+    justify-self:end;
+  }
+  .comentario-toggle.tiene-texto{
+    border-color:var(--accent);
+    color:var(--accent);
   }
   .comentario-toggle.tiene-texto{
     border-color:var(--accent);
@@ -708,6 +736,12 @@
       </div>
     </div>
     <div class="sub">Marca Secuencia y Concordancia para cada muestra. Guarda cuando termines.</div>
+    <div class="muestra-header">
+      <span></span>
+      <span>Secuencia</span>
+      <span>Concordancia</span>
+      <span></span>
+    </div>
     <div id="rondaRows"></div>
     <div id="rondaError">Falta marcar Secuencia y/o Concordancia en alguna muestra.</div>
     <div class="btn-row" style="margin-top:16px;">
@@ -1389,15 +1423,13 @@
     wrap.innerHTML =
       '<div class="muestra-row-main">' +
         '<span class="muestra-row-nombre">Muestra ' + numero + '</span>' +
-        '<div class="mini-toggle-group" data-tipo="secuencia">' +
-          '<span class="mini-label">Secuencia</span>' +
-          '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Correcto">✓</button>' +
-          '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Incorrecto">✗</button>' +
+        '<div class="mini-toggle-group" data-tipo="secuencia" aria-label="Secuencia">' +
+          '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Secuencia correcta">✓</button>' +
+          '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Secuencia incorrecta">✗</button>' +
         '</div>' +
-        '<div class="mini-toggle-group" data-tipo="concordancia">' +
-          '<span class="mini-label">Concordancia</span>' +
-          '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Correcto">✓</button>' +
-          '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Incorrecto">✗</button>' +
+        '<div class="mini-toggle-group" data-tipo="concordancia" aria-label="Concordancia">' +
+          '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Concordancia correcta">✓</button>' +
+          '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Concordancia incorrecta">✗</button>' +
         '</div>' +
         '<button type="button" class="comentario-toggle" title="Agregar comentario" aria-label="Agregar comentario">💬</button>' +
       '</div>' +
