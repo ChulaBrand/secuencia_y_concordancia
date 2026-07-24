@@ -1984,20 +1984,28 @@
     }catch(e){ /* audio no disponible, se ignora */ }
   });
 
+  // Se recalcula desde cero en cada segundo (no solo en la ventana exacta
+  // del minuto :00/:15/:30/:45) para que la ronda pendiente se autocorrija
+  // aunque el navegador haya pausado el temporizador (pestaña en segundo
+  // plano, pantalla apagada, etc.) y se haya saltado el instante exacto.
   function verificarDisparo(now){
-    var minuto = now.getMinutes();
-    var segundo = now.getSeconds();
-    if (minuto % 15 === 0 && segundo < 5 && dentroDeHorario(now)){
-      var clave = claveRonda(now);
-      if (clave !== ultimaClaveDisparada && !rondasRegistradas.has(clave)){
-        ultimaClaveDisparada = clave;
-        if (!loginOverlay.classList.contains("hidden") || !inspectorActual()){
-          rondaPendiente = clave;
-          iniciarAlertaPendiente();
-        } else {
-          iniciarRonda(clave);
-          sonarAlerta();
-        }
+    if (!dentroDeHorario(now)){
+      rondaPendiente = null;
+      return;
+    }
+    var claveDebida = claveRondaMasReciente(now);
+    if (rondasRegistradas.has(claveDebida)){
+      rondaPendiente = null;
+      return;
+    }
+    rondaPendiente = claveDebida;
+    if (claveDebida !== ultimaClaveDisparada){
+      ultimaClaveDisparada = claveDebida;
+      if (!loginOverlay.classList.contains("hidden") || !inspectorActual()){
+        iniciarAlertaPendiente();
+      } else {
+        iniciarRonda(claveDebida);
+        sonarAlerta();
       }
     }
   }
