@@ -904,6 +904,30 @@
         <div class="btn-row">
           <button class="btn-secondary" id="adminGuardarPinMaestroBtn">Guardar nuevo PIN de administrador</button>
         </div>
+
+        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
+
+        <div class="admin-section-label">Token de seguridad</div>
+        <div class="sub" style="margin-bottom:14px;">
+          Palabra secreta que se manda junto con cada registro y con la torreta, para que Google Sheets rechace peticiones de quien no la tenga. Debe coincidir con el <code>TOKEN_SECRETO</code> que pongas en Code.gs, y con el que le pongas al Arduino.
+        </div>
+        <div class="field">
+          <label for="adminToken">Token</label>
+          <input id="adminToken" type="text" class="admin-input-lg" placeholder="Ej: chula-2026-xyz" autocomplete="off">
+        </div>
+        <button class="btn-secondary admin-add-btn" id="adminGuardarTokenBtn">Guardar token</button>
+
+        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
+
+        <div class="admin-section-label">Respaldo</div>
+        <div class="sub" style="margin-bottom:14px;">
+          Usuarios, turnos, horario, alarma y token viven solo en este navegador. Si se borra la caché o cambian de dispositivo, se pierden. Exporta un archivo de respaldo de vez en cuando.
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" id="adminExportarBtn">⬇ Exportar configuración</button>
+          <button class="btn-secondary" id="adminImportarBtn">⬆ Importar configuración</button>
+          <input type="file" id="adminImportarInput" accept="application/json" class="hidden">
+        </div>
       </div>
 
       <div id="adminTabHorarios" class="admin-tab-panel hidden">
@@ -972,6 +996,8 @@
         </div>
         <button class="btn-primary admin-add-btn" id="adminGuardarTorretaBtn">Guardar y sincronizar torreta</button>
         <div id="adminTorretaEstado" class="sub" style="margin-top:10px; margin-bottom:0;"></div>
+
+        <div class="turno-hint" id="adminTorretaEnVivo" style="margin-top:16px; font-size:15px;">Estado de la torreta: consultando…</div>
 
         <div class="admin-section-label" style="margin-top:22px;">Modo prueba</div>
         <div class="sub" style="margin-bottom:14px;">
@@ -1068,6 +1094,12 @@
   var adminProbarAmarilloBtn = document.getElementById("adminProbarAmarilloBtn");
   var adminProbarRojoBtn = document.getElementById("adminProbarRojoBtn");
   var adminProbarNormalBtn = document.getElementById("adminProbarNormalBtn");
+  var adminToken = document.getElementById("adminToken");
+  var adminGuardarTokenBtn = document.getElementById("adminGuardarTokenBtn");
+  var adminExportarBtn = document.getElementById("adminExportarBtn");
+  var adminImportarBtn = document.getElementById("adminImportarBtn");
+  var adminImportarInput = document.getElementById("adminImportarInput");
+  var adminTorretaEnVivoEl = document.getElementById("adminTorretaEnVivo");
 
   var USERS_KEY = "calidad_usuarios";
   var ADMIN_PIN_KEY = "calidad_admin_pin";
@@ -1077,6 +1109,7 @@
   var TURNOS_KEY = "calidad_turnos";
   var ALARMA_KEY = "calidad_alarma";
   var TORRETA_KEY = "calidad_torreta";
+  var TOKEN_KEY = "calidad_token";
   var VOLUMENES = { suave: 0.12, media: 0.22, fuerte: 0.35, muyfuerte: 0.55 };
   var rondaPendiente = null;
   var pinObjetivo = null;
@@ -1531,6 +1564,8 @@
       adminAlarmaSonido.value = a.sonido;
       adminTorretaVentana.value = cargarTorretaConfig().ventanaMin;
       adminTorretaEstadoEl.textContent = "";
+      adminToken.value = cargarToken();
+      iniciarPollTorreta();
     } else {
       adminGateError.style.display = "block";
       adminGatePinValor = "";
@@ -1542,12 +1577,54 @@
 
   adminGateVolverBtn.addEventListener("click", function(){
     adminOverlay.classList.add("hidden");
+    detenerPollTorreta();
   });
 
   adminPanelVolverBtn.addEventListener("click", function(){
     adminOverlay.classList.add("hidden");
+    detenerPollTorreta();
     if (!loginOverlay.classList.contains("hidden")) mostrarListaUsuarios();
   });
+
+  // ---- Estado en vivo de la torreta (solo mientras el panel admin esté abierto) ----
+  var torretaPollInterval = null;
+
+  function consultarTorretaEnVivo(){
+    var url = document.getElementById("sheetsUrl").value.trim();
+    if (!url){
+      adminTorretaEnVivoEl.textContent = "Estado de la torreta: sin URL configurada.";
+      return;
+    }
+    var token = cargarToken();
+    var full = url + (url.indexOf("?") === -1 ? "?" : "&") + "torreta=1" +
+      (token ? "&token=" + encodeURIComponent(token) : "");
+    fetch(full)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var texto = "Estado de la torreta: ";
+        if (data.rojo) texto += "🔴 rojo (sirena)";
+        else if (data.amarillo) texto += "🟡 amarillo";
+        else if (data.verde) texto += "🟢 verde";
+        else texto += "◼ apagada";
+        adminTorretaEnVivoEl.textContent = texto;
+      })
+      .catch(function(){
+        adminTorretaEnVivoEl.textContent = "Estado de la torreta: no se pudo leer (revisa la URL/token, o el navegador bloqueó la lectura).";
+      });
+  }
+
+  function iniciarPollTorreta(){
+    detenerPollTorreta();
+    consultarTorretaEnVivo();
+    torretaPollInterval = setInterval(consultarTorretaEnVivo, 6000);
+  }
+
+  function detenerPollTorreta(){
+    if (torretaPollInterval){
+      clearInterval(torretaPollInterval);
+      torretaPollInterval = null;
+    }
+  }
 
   adminAgregarBtn.addEventListener("click", function(){
     var nombre = adminNuevoNombre.value.trim();
@@ -1684,6 +1761,82 @@
     sincronizarTorreta();
   });
 
+  // ---- Token de seguridad ----
+  function cargarToken(){
+    return localStorage.getItem(TOKEN_KEY) || "";
+  }
+
+  function guardarToken(valor){
+    localStorage.setItem(TOKEN_KEY, valor);
+  }
+
+  adminGuardarTokenBtn.addEventListener("click", function(){
+    guardarToken(adminToken.value.trim());
+    mostrarToast("Token guardado.");
+  });
+
+  // ---- Respaldo: exportar/importar toda la configuración ----
+  function exportarConfiguracion(){
+    var datos = {
+      version: 1,
+      fecha: new Date().toISOString(),
+      usuarios: localStorage.getItem(USERS_KEY),
+      adminPin: localStorage.getItem(ADMIN_PIN_KEY),
+      horario: localStorage.getItem(HORARIO_KEY),
+      turnos: localStorage.getItem(TURNOS_KEY),
+      alarma: localStorage.getItem(ALARMA_KEY),
+      torreta: localStorage.getItem(TORRETA_KEY),
+      token: localStorage.getItem(TOKEN_KEY)
+    };
+    var blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "calidad_config_" + new Date().toISOString().slice(0, 10) + ".json";
+    link.click();
+    mostrarToast("Configuración exportada.");
+  }
+
+  function importarConfiguracion(archivo){
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var datos = JSON.parse(reader.result);
+        if (datos.usuarios != null) localStorage.setItem(USERS_KEY, datos.usuarios);
+        if (datos.adminPin != null) localStorage.setItem(ADMIN_PIN_KEY, datos.adminPin);
+        if (datos.horario != null) localStorage.setItem(HORARIO_KEY, datos.horario);
+        if (datos.turnos != null) localStorage.setItem(TURNOS_KEY, datos.turnos);
+        if (datos.alarma != null) localStorage.setItem(ALARMA_KEY, datos.alarma);
+        if (datos.torreta != null) localStorage.setItem(TORRETA_KEY, datos.torreta);
+        if (datos.token != null) localStorage.setItem(TOKEN_KEY, datos.token);
+
+        renderAdminUsuarios();
+        renderAdminTurnos();
+        var h = cargarHorario();
+        adminHoraInicio.value = h.inicio || "";
+        adminHoraFin.value = h.fin || "";
+        var a = cargarAlarmaConfig();
+        adminAlarmaDuracion.value = a.duracion;
+        adminAlarmaVolumen.value = a.volumen;
+        adminAlarmaSonido.value = a.sonido;
+        adminTorretaVentana.value = cargarTorretaConfig().ventanaMin;
+        adminToken.value = cargarToken();
+        mostrarToast("Configuración importada correctamente.");
+      }catch(e){
+        mostrarToast("El archivo no es un respaldo válido.");
+      }
+    };
+    reader.readAsText(archivo);
+  }
+
+  adminExportarBtn.addEventListener("click", exportarConfiguracion);
+  adminImportarBtn.addEventListener("click", function(){ adminImportarInput.click(); });
+  adminImportarInput.addEventListener("change", function(){
+    if (adminImportarInput.files && adminImportarInput.files[0]){
+      importarConfiguracion(adminImportarInput.files[0]);
+    }
+    adminImportarInput.value = "";
+  });
+
   // ---- Torreta física (Arduino): horario + ventana de advertencia ----
   function cargarTorretaConfig(){
     try{
@@ -1708,7 +1861,8 @@
       tipo: "config_torreta",
       horarioInicio: h.inicio || "",
       horarioFin: h.fin || "",
-      ventanaAdvertenciaMin: t.ventanaMin
+      ventanaAdvertenciaMin: t.ventanaMin,
+      token: cargarToken()
     };
     adminTorretaEstadoEl.textContent = "Enviando configuración a la torreta…";
     fetch(url, {
@@ -1737,7 +1891,7 @@
       adminTorretaEstadoEl.textContent = "No hay URL de Google Sheets configurada.";
       return;
     }
-    var payload = { tipo: "config_torreta_test", color: color };
+    var payload = { tipo: "config_torreta_test", color: color, token: cargarToken() };
     adminTorretaEstadoEl.textContent = color
       ? "Probando " + color + "… (se apaga solo en 20 s)"
       : "Volviendo a modo normal…";
@@ -2036,7 +2190,8 @@
       horaRonda: claveHora,
       horaReal: horaReal || "",
       inspector: inspector,
-      registros: registros
+      registros: registros,
+      token: cargarToken()
     };
     fetch(url, {
       method: "POST",
