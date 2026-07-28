@@ -991,8 +991,12 @@
           Al guardar, esto y el horario de operación se envían a Google Sheets para que la torreta los use.
         </div>
         <div class="field">
-          <label for="adminTorretaVentana">Ventana de advertencia (minutos)</label>
-          <input id="adminTorretaVentana" type="number" min="1" max="15" step="1" class="admin-input-lg">
+          <label for="adminTorretaVentanaAntes">Minutos antes (amarillo empieza)</label>
+          <input id="adminTorretaVentanaAntes" type="number" min="1" max="15" step="1" class="admin-input-lg">
+        </div>
+        <div class="field">
+          <label for="adminTorretaVentanaDespues">Minutos después (amarillo hasta pasar a rojo)</label>
+          <input id="adminTorretaVentanaDespues" type="number" min="1" max="15" step="1" class="admin-input-lg">
         </div>
         <button class="btn-primary admin-add-btn" id="adminGuardarTorretaBtn">Guardar y sincronizar torreta</button>
         <div id="adminTorretaEstado" class="sub" style="margin-top:10px; margin-bottom:0;"></div>
@@ -1087,7 +1091,8 @@
   var adminAlarmaSonido = document.getElementById("adminAlarmaSonido");
   var adminGuardarAlarmaBtn = document.getElementById("adminGuardarAlarmaBtn");
   var adminProbarSonidoBtn = document.getElementById("adminProbarSonidoBtn");
-  var adminTorretaVentana = document.getElementById("adminTorretaVentana");
+  var adminTorretaVentanaAntes = document.getElementById("adminTorretaVentanaAntes");
+  var adminTorretaVentanaDespues = document.getElementById("adminTorretaVentanaDespues");
   var adminGuardarTorretaBtn = document.getElementById("adminGuardarTorretaBtn");
   var adminTorretaEstadoEl = document.getElementById("adminTorretaEstado");
   var adminProbarVerdeBtn = document.getElementById("adminProbarVerdeBtn");
@@ -1562,7 +1567,9 @@
       adminAlarmaDuracion.value = a.duracion;
       adminAlarmaVolumen.value = a.volumen;
       adminAlarmaSonido.value = a.sonido;
-      adminTorretaVentana.value = cargarTorretaConfig().ventanaMin;
+      var vt = cargarTorretaConfig();
+      adminTorretaVentanaAntes.value = vt.ventanaAntesMin;
+      adminTorretaVentanaDespues.value = vt.ventanaDespuesMin;
       adminTorretaEstadoEl.textContent = "";
       adminToken.value = cargarToken();
       iniciarPollTorreta();
@@ -1818,7 +1825,9 @@
         adminAlarmaDuracion.value = a.duracion;
         adminAlarmaVolumen.value = a.volumen;
         adminAlarmaSonido.value = a.sonido;
-        adminTorretaVentana.value = cargarTorretaConfig().ventanaMin;
+        var vt = cargarTorretaConfig();
+      adminTorretaVentanaAntes.value = vt.ventanaAntesMin;
+      adminTorretaVentanaDespues.value = vt.ventanaDespuesMin;
         adminToken.value = cargarToken();
         mostrarToast("Configuración importada correctamente.");
       }catch(e){
@@ -1841,8 +1850,11 @@
   function cargarTorretaConfig(){
     try{
       var cfg = JSON.parse(localStorage.getItem(TORRETA_KEY) || "null") || {};
-      return { ventanaMin: cfg.ventanaMin || 1 };
-    }catch(e){ return { ventanaMin: 1 }; }
+      return {
+        ventanaAntesMin: cfg.ventanaAntesMin || 1,
+        ventanaDespuesMin: cfg.ventanaDespuesMin || 1
+      };
+    }catch(e){ return { ventanaAntesMin: 1, ventanaDespuesMin: 1 }; }
   }
 
   function guardarTorretaConfig(obj){
@@ -1861,7 +1873,8 @@
       tipo: "config_torreta",
       horarioInicio: h.inicio || "",
       horarioFin: h.fin || "",
-      ventanaAdvertenciaMin: t.ventanaMin,
+      ventanaAntesMin: t.ventanaAntesMin,
+      ventanaDespuesMin: t.ventanaDespuesMin,
       token: cargarToken()
     };
     adminTorretaEstadoEl.textContent = "Enviando configuración a la torreta…";
@@ -1878,9 +1891,11 @@
   }
 
   adminGuardarTorretaBtn.addEventListener("click", function(){
-    var ventana = parseInt(adminTorretaVentana.value, 10) || 1;
-    ventana = Math.min(15, Math.max(1, ventana));
-    guardarTorretaConfig({ ventanaMin: ventana });
+    var antes = parseInt(adminTorretaVentanaAntes.value, 10) || 1;
+    var despues = parseInt(adminTorretaVentanaDespues.value, 10) || 1;
+    antes = Math.min(15, Math.max(1, antes));
+    despues = Math.min(15, Math.max(1, despues));
+    guardarTorretaConfig({ ventanaAntesMin: antes, ventanaDespuesMin: despues });
     mostrarToast("Torreta guardada.");
     sincronizarTorreta();
   });
