@@ -434,6 +434,40 @@
     padding:10px 0;
     border-bottom:1px solid var(--border);
   }
+  .admin-dia-fila{
+    padding:12px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .admin-dia-label{
+    display:block;
+    font-weight:700;
+    font-size:15px;
+    margin-bottom:8px;
+  }
+  .admin-dia-turno{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .admin-dia-turno-label{
+    font-size:13px;
+    color:var(--muted);
+    min-width:56px;
+  }
+  .admin-dia-input{
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:14px;
+    font-family:inherit;
+  }
+  .admin-dia-turno-sep{
+    color:var(--muted);
+  }
   .admin-turno-label{
     font-weight:700;
     font-size:16px;
@@ -629,7 +663,7 @@
   }
   .muestra-header{
     display:grid;
-    grid-template-columns:84px 1fr 1fr 60px;
+    grid-template-columns:84px 1fr 1fr;
     gap:14px;
     padding:0 14px;
     margin-bottom:6px;
@@ -653,7 +687,7 @@
   }
   .muestra-row-main{
     display:grid;
-    grid-template-columns:84px 1fr 1fr 60px;
+    grid-template-columns:84px 1fr 1fr;
     align-items:center;
     gap:14px;
   }
@@ -662,14 +696,12 @@
       grid-template-columns:1fr 1fr;
       grid-template-areas:
         "nombre nombre"
-        "sec conc"
-        "com com";
+        "sec conc";
       row-gap:8px;
     }
     .muestra-row-nombre{ grid-area:nombre; }
     .mini-toggle-group:nth-of-type(1){ grid-area:sec; }
     .mini-toggle-group:nth-of-type(2){ grid-area:conc; }
-    .comentario-toggle{ grid-area:com; margin-left:0; width:100%; }
   }
   .muestra-row-nombre{
     font-weight:700;
@@ -704,34 +736,25 @@
     border-color:var(--bad);
     color:#fff;
   }
-  .comentario-toggle{
-    width:52px;
-    height:52px;
-    border-radius:10px;
-    border:1.5px solid var(--border);
-    background:var(--panel);
-    font-size:20px;
-    padding:0;
-    justify-self:end;
-  }
-  .comentario-toggle.tiene-texto{
-    border-color:var(--accent);
-    color:var(--accent);
-  }
-  .obs-field-mini{
+  .error-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
     margin-top:10px;
   }
-  .obs-field-mini textarea{
-    width:100%;
-    border:1px solid var(--border);
-    border-radius:8px;
-    padding:8px 10px;
-    font-family:inherit;
-    font-size:13px;
-    resize:vertical;
-    min-height:50px;
-    background:var(--panel-2);
+  .error-chip{
+    border:1.5px solid var(--border);
+    background:var(--panel);
     color:var(--text);
+    border-radius:999px;
+    padding:8px 14px;
+    font-size:13px;
+    font-weight:700;
+  }
+  .error-chip.selected{
+    background:var(--bad);
+    border-color:var(--bad);
+    color:#fff;
   }
   #rondaError{
     color:var(--bad);
@@ -816,10 +839,9 @@
       <span></span>
       <span>Secuencia</span>
       <span>Concordancia</span>
-      <span></span>
     </div>
     <div id="rondaRows"></div>
-    <div id="rondaError">Falta marcar Secuencia y/o Concordancia en alguna muestra.</div>
+    <div id="rondaError">Falta marcar Secuencia y/o Concordancia en alguna muestra, o falta indicar el tipo de error cuando Concordancia está en ✗.</div>
     <div class="btn-row" style="margin-top:16px;">
       <button class="btn-primary" id="guardarBtn">Guardar registro</button>
     </div>
@@ -931,18 +953,9 @@
       </div>
 
       <div id="adminTabHorarios" class="admin-tab-panel hidden">
-        <div class="admin-section-label">Horario de operación</div>
-        <div class="sub" style="margin-bottom:14px;">Fuera de este horario no sonará la alarma automática. Dejar vacío = siempre activa.</div>
-        <div class="row-inline">
-          <div class="field" style="margin-bottom:14px;">
-            <label for="adminHoraInicio">Desde</label>
-            <input id="adminHoraInicio" type="time" class="admin-input-lg" style="margin-bottom:0;">
-          </div>
-          <div class="field" style="margin-bottom:14px;">
-            <label for="adminHoraFin">Hasta</label>
-            <input id="adminHoraFin" type="time" class="admin-input-lg" style="margin-bottom:0;">
-          </div>
-        </div>
+        <div class="admin-section-label">Horario de operación por día</div>
+        <div class="sub" style="margin-bottom:14px;">Cada día puede tener hasta 2 turnos, con horarios distintos. Deja un turno vacío si ese día no se trabaja en él. Si un día no tiene ningún turno con horario, ese día no habrá alarma automática. Si NINGÚN día tiene nada configurado, se considera siempre activo (comportamiento anterior).</div>
+        <div id="adminHorarioDias"></div>
         <button class="btn-secondary admin-add-btn" id="adminGuardarHorarioBtn">Guardar horario</button>
 
         <div class="admin-section-label" style="margin-top:26px;">Turnos por franja</div>
@@ -1081,8 +1094,7 @@
   var adminAgregarBtn = document.getElementById("adminAgregarBtn");
   var adminNuevoPinMaestro = document.getElementById("adminNuevoPinMaestro");
   var adminGuardarPinMaestroBtn = document.getElementById("adminGuardarPinMaestroBtn");
-  var adminHoraInicio = document.getElementById("adminHoraInicio");
-  var adminHoraFin = document.getElementById("adminHoraFin");
+  var adminHorarioDiasEl = document.getElementById("adminHorarioDias");
   var adminGuardarHorarioBtn = document.getElementById("adminGuardarHorarioBtn");
   var adminTurnosEl = document.getElementById("adminTurnos");
   var adminGuardarTurnosBtn = document.getElementById("adminGuardarTurnosBtn");
@@ -1560,9 +1572,7 @@
       activarPestanaAdmin("usuarios");
       renderAdminUsuarios();
       renderAdminTurnos();
-      var h = cargarHorario();
-      adminHoraInicio.value = h.inicio || "";
-      adminHoraFin.value = h.fin || "";
+      renderAdminHorario();
       var a = cargarAlarmaConfig();
       adminAlarmaDuracion.value = a.duracion;
       adminAlarmaVolumen.value = a.volumen;
@@ -1726,44 +1736,131 @@
     return d;
   }
 
-  // ---- Horario de operación ----
+  // ---- Horario de operación por día (2 turnos por día) ----
+  var DIAS_SEMANA = [
+    { clave: "lunes", label: "Lunes" },
+    { clave: "martes", label: "Martes" },
+    { clave: "miercoles", label: "Miércoles" },
+    { clave: "jueves", label: "Jueves" },
+    { clave: "viernes", label: "Viernes" },
+    { clave: "sabado", label: "Sábado" },
+    { clave: "domingo", label: "Domingo" }
+  ];
+  // Índice = Date.getDay() (0 = domingo ... 6 = sábado).
+  var DIAS_POR_INDICE_JS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+
+  function turnoVacio(){ return { inicio: "", fin: "" }; }
+
   function cargarHorario(){
-    try{ return JSON.parse(localStorage.getItem(HORARIO_KEY) || "null") || { inicio: "", fin: "" }; }
-    catch(e){ return { inicio: "", fin: "" }; }
+    var def = {};
+    DIAS_SEMANA.forEach(function(d){ def[d.clave] = { t1: turnoVacio(), t2: turnoVacio() }; });
+    try{
+      var guardado = JSON.parse(localStorage.getItem(HORARIO_KEY) || "null");
+      if (guardado && typeof guardado === "object"){
+        DIAS_SEMANA.forEach(function(d){
+          var g = guardado[d.clave];
+          if (g){
+            def[d.clave] = {
+              t1: { inicio: (g.t1 && g.t1.inicio) || "", fin: (g.t1 && g.t1.fin) || "" },
+              t2: { inicio: (g.t2 && g.t2.inicio) || "", fin: (g.t2 && g.t2.fin) || "" }
+            };
+          }
+        });
+      }
+    }catch(e){ /* horario guardado en un formato viejo o corrupto: se usa el vacío */ }
+    return def;
   }
 
   function guardarHorario(obj){
     localStorage.setItem(HORARIO_KEY, JSON.stringify(obj));
   }
 
+  function horarioTotalmenteVacio(h){
+    return DIAS_SEMANA.every(function(d){
+      var c = h[d.clave];
+      return !c.t1.inicio && !c.t1.fin && !c.t2.inicio && !c.t2.fin;
+    });
+  }
+
+  function dentroDeTurno_(actual, turno){
+    if (!turno || !turno.inicio || !turno.fin) return false;
+    if (turno.inicio <= turno.fin){
+      return actual >= turno.inicio && actual < turno.fin;
+    }
+    return actual >= turno.inicio || actual < turno.fin;
+  }
+
   function dentroDeHorario(now){
     var h = cargarHorario();
-    if (!h.inicio || !h.fin) return true;
+    if (horarioTotalmenteVacio(h)) return true; // nada configurado -> siempre activo
+    var cfg = h[DIAS_POR_INDICE_JS[now.getDay()]];
     var actual = pad(now.getHours()) + ":" + pad(now.getMinutes());
-    if (h.inicio <= h.fin){
-      return actual >= h.inicio && actual < h.fin;
-    }
-    return actual >= h.inicio || actual < h.fin;
+    return dentroDeTurno_(actual, cfg.t1) || dentroDeTurno_(actual, cfg.t2);
+  }
+
+  function textoTurno_(turno){
+    return (turno && turno.inicio && turno.fin) ? (turno.inicio + " a " + turno.fin) : null;
+  }
+
+  function textoHorarioDeHoy_(h, now){
+    var cfg = h[DIAS_POR_INDICE_JS[now.getDay()]];
+    var partes = [textoTurno_(cfg.t1), textoTurno_(cfg.t2)].filter(Boolean);
+    return partes.length ? partes.join(" y ") : "sin turnos hoy";
   }
 
   function actualizarEstadoHorario(now){
     var h = cargarHorario();
-    if (!h.inicio || !h.fin){
+    if (horarioTotalmenteVacio(h)){
       horarioEstadoEl.classList.add("hidden");
       return;
     }
     horarioEstadoEl.classList.remove("hidden");
+    var textoHoy = textoHorarioDeHoy_(h, now);
     if (dentroDeHorario(now)){
       horarioEstadoEl.classList.remove("fuera");
-      horarioEstadoEl.textContent = "Horario de operación: " + h.inicio + " a " + h.fin + " (activo ahora)";
+      horarioEstadoEl.textContent = "Horario de operación de hoy: " + textoHoy + " (activo ahora)";
     } else {
       horarioEstadoEl.classList.add("fuera");
-      horarioEstadoEl.textContent = "Fuera de horario de operación (" + h.inicio + " a " + h.fin + ") — la alarma automática está en pausa.";
+      horarioEstadoEl.textContent = "Fuera de horario de operación (hoy: " + textoHoy + ") — la alarma automática está en pausa.";
     }
   }
 
+  function renderAdminHorario(){
+    var h = cargarHorario();
+    adminHorarioDiasEl.innerHTML = "";
+    DIAS_SEMANA.forEach(function(d){
+      var cfg = h[d.clave];
+      var fila = document.createElement("div");
+      fila.className = "admin-dia-fila";
+      fila.dataset.dia = d.clave;
+      fila.innerHTML =
+        '<span class="admin-dia-label">' + d.label + '</span>' +
+        '<div class="admin-dia-turno">' +
+          '<span class="admin-dia-turno-label">Turno 1</span>' +
+          '<input type="time" class="admin-dia-input" data-campo="t1-inicio" value="' + cfg.t1.inicio + '">' +
+          '<span class="admin-dia-turno-sep">–</span>' +
+          '<input type="time" class="admin-dia-input" data-campo="t1-fin" value="' + cfg.t1.fin + '">' +
+        '</div>' +
+        '<div class="admin-dia-turno">' +
+          '<span class="admin-dia-turno-label">Turno 2</span>' +
+          '<input type="time" class="admin-dia-input" data-campo="t2-inicio" value="' + cfg.t2.inicio + '">' +
+          '<span class="admin-dia-turno-sep">–</span>' +
+          '<input type="time" class="admin-dia-input" data-campo="t2-fin" value="' + cfg.t2.fin + '">' +
+        '</div>';
+      adminHorarioDiasEl.appendChild(fila);
+    });
+  }
+
   adminGuardarHorarioBtn.addEventListener("click", function(){
-    guardarHorario({ inicio: adminHoraInicio.value, fin: adminHoraFin.value });
+    var nuevo = {};
+    adminHorarioDiasEl.querySelectorAll(".admin-dia-fila").forEach(function(fila){
+      function val(campo){ return fila.querySelector('[data-campo="' + campo + '"]').value; }
+      nuevo[fila.dataset.dia] = {
+        t1: { inicio: val("t1-inicio"), fin: val("t1-fin") },
+        t2: { inicio: val("t2-inicio"), fin: val("t2-fin") }
+      };
+    });
+    guardarHorario(nuevo);
     mostrarToast("Horario guardado.");
     sincronizarTorreta();
   });
@@ -1818,9 +1915,7 @@
 
         renderAdminUsuarios();
         renderAdminTurnos();
-        var h = cargarHorario();
-        adminHoraInicio.value = h.inicio || "";
-        adminHoraFin.value = h.fin || "";
+        renderAdminHorario();
         var a = cargarAlarmaConfig();
         adminAlarmaDuracion.value = a.duracion;
         adminAlarmaVolumen.value = a.volumen;
@@ -1871,8 +1966,7 @@
     var t = cargarTorretaConfig();
     var payload = {
       tipo: "config_torreta",
-      horarioInicio: h.inicio || "",
-      horarioFin: h.fin || "",
+      horario: h,
       ventanaAntesMin: t.ventanaAntesMin,
       ventanaDespuesMin: t.ventanaDespuesMin,
       token: cargarToken()
@@ -2094,6 +2188,8 @@
     }catch(e){ /* audio no disponible, se ignora */ }
   }
 
+  var TIPOS_ERROR_CONCORDANCIA = ["Error color", "Error tamaño", "Error calidad"];
+
   function crearFilaMuestra(numero){
     var wrap = document.createElement("div");
     wrap.className = "muestra-row";
@@ -2109,11 +2205,21 @@
           '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Concordancia correcta">✓</button>' +
           '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Concordancia incorrecta">✗</button>' +
         '</div>' +
-        '<button type="button" class="comentario-toggle" title="Agregar comentario" aria-label="Agregar comentario">💬</button>' +
       '</div>' +
-      '<div class="obs-field-mini hidden">' +
-        '<textarea placeholder="Comentario sobre esta muestra..."></textarea>' +
+      '<div class="error-chips hidden">' +
+        TIPOS_ERROR_CONCORDANCIA.map(function(tipo){
+          return '<button type="button" class="error-chip" data-val="' + tipo + '">' + tipo + '</button>';
+        }).join("") +
       '</div>';
+
+    var errorChips = wrap.querySelector(".error-chips");
+    var chipBotones = errorChips.querySelectorAll(".error-chip");
+    chipBotones.forEach(function(chip){
+      chip.addEventListener("click", function(){
+        chip.classList.toggle("selected");
+        rondaError.style.display = "none";
+      });
+    });
 
     wrap.querySelectorAll(".mini-toggle-group").forEach(function(ind){
       var botones = ind.querySelectorAll(".mini-toggle");
@@ -2122,21 +2228,15 @@
           botones.forEach(function(b){ b.classList.remove("selected"); });
           btn.classList.add("selected");
           rondaError.style.display = "none";
+          if (ind.dataset.tipo === "concordancia"){
+            var esMala = btn.classList.contains("bad");
+            errorChips.classList.toggle("hidden", !esMala);
+            if (!esMala){
+              chipBotones.forEach(function(c){ c.classList.remove("selected"); });
+            }
+          }
         });
       });
-    });
-
-    var comentarioBtn = wrap.querySelector(".comentario-toggle");
-    var obsField = wrap.querySelector(".obs-field-mini");
-    var textarea = obsField.querySelector("textarea");
-    comentarioBtn.addEventListener("click", function(){
-      obsField.classList.toggle("hidden");
-      if (!obsField.classList.contains("hidden")){
-        setTimeout(function(){ textarea.focus(); }, 30);
-      }
-    });
-    textarea.addEventListener("input", function(){
-      comentarioBtn.classList.toggle("tiene-texto", textarea.value.trim().length > 0);
     });
 
     return wrap;
@@ -2164,11 +2264,19 @@
         incompleto = true;
         return;
       }
+      var erroresSel = Array.prototype.map.call(
+        b.querySelectorAll(".error-chip.selected"),
+        function(chip){ return chip.dataset.val; }
+      );
+      if (conSel.dataset.val === "No OK" && !erroresSel.length){
+        incompleto = true;
+        return;
+      }
       registros.push({
         muestra: b.dataset.muestra,
         secuencia: secSel.dataset.val,
         concordancia: conSel.dataset.val,
-        observacion: b.querySelector("textarea").value.trim()
+        observacion: erroresSel.join(", ")
       });
     });
 
