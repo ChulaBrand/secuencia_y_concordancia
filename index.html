@@ -688,8 +688,12 @@
   .muestra-row-main{
     display:grid;
     grid-template-columns:84px 1fr 1fr;
-    align-items:center;
+    align-items:start;
     gap:14px;
+  }
+  .muestra-row-main .muestra-row-nombre,
+  .muestra-row-main > .mini-toggle-group{
+    align-self:center;
   }
   @media (max-width:560px){
     .muestra-row-main{
@@ -700,8 +704,8 @@
       row-gap:8px;
     }
     .muestra-row-nombre{ grid-area:nombre; }
-    .mini-toggle-group:nth-of-type(1){ grid-area:sec; }
-    .mini-toggle-group:nth-of-type(2){ grid-area:conc; }
+    .muestra-row-main > .mini-toggle-group{ grid-area:sec; }
+    .concordancia-col{ grid-area:conc; }
   }
   .muestra-row-nombre{
     font-weight:700;
@@ -712,6 +716,12 @@
     align-items:center;
     justify-content:center;
     gap:10px;
+  }
+  .concordancia-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
   }
   .mini-toggle{
     width:100%;
@@ -739,8 +749,8 @@
   .error-chips{
     display:flex;
     flex-wrap:wrap;
+    justify-content:center;
     gap:8px;
-    margin-top:10px;
   }
   .error-chip{
     border:1.5px solid var(--border);
@@ -2201,22 +2211,26 @@
           '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Secuencia correcta">✓</button>' +
           '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Secuencia incorrecta">✗</button>' +
         '</div>' +
-        '<div class="mini-toggle-group" data-tipo="concordancia" aria-label="Concordancia">' +
-          '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Concordancia correcta">✓</button>' +
-          '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Concordancia incorrecta">✗</button>' +
+        '<div class="concordancia-col">' +
+          '<div class="mini-toggle-group" data-tipo="concordancia" aria-label="Concordancia">' +
+            '<button type="button" class="mini-toggle ok" data-val="OK" aria-label="Concordancia correcta">✓</button>' +
+            '<button type="button" class="mini-toggle bad" data-val="No OK" aria-label="Concordancia incorrecta">✗</button>' +
+          '</div>' +
+          '<div class="error-chips hidden">' +
+            TIPOS_ERROR_CONCORDANCIA.map(function(tipo){
+              return '<button type="button" class="error-chip" data-val="' + tipo + '">' + tipo + '</button>';
+            }).join("") +
+          '</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="error-chips hidden">' +
-        TIPOS_ERROR_CONCORDANCIA.map(function(tipo){
-          return '<button type="button" class="error-chip" data-val="' + tipo + '">' + tipo + '</button>';
-        }).join("") +
       '</div>';
 
     var errorChips = wrap.querySelector(".error-chips");
     var chipBotones = errorChips.querySelectorAll(".error-chip");
     chipBotones.forEach(function(chip){
       chip.addEventListener("click", function(){
-        chip.classList.toggle("selected");
+        var yaSeleccionado = chip.classList.contains("selected");
+        chipBotones.forEach(function(c){ c.classList.remove("selected"); });
+        if (!yaSeleccionado) chip.classList.add("selected");
         rondaError.style.display = "none";
       });
     });
