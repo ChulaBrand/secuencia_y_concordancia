@@ -451,11 +451,6 @@
     margin-bottom:8px;
     flex-wrap:wrap;
   }
-  .admin-dia-turno-label{
-    font-size:13px;
-    color:var(--muted);
-    min-width:56px;
-  }
   .admin-dia-input{
     padding:8px 10px;
     border:1px solid var(--border);
@@ -467,6 +462,25 @@
   }
   .admin-dia-turno-sep{
     color:var(--muted);
+  }
+  .admin-dia-quitar-turno{
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--bad);
+    font-weight:700;
+    padding:0;
+  }
+  .admin-dia-agregar-turno{
+    border:1px dashed var(--border);
+    background:none;
+    color:var(--accent);
+    font-weight:700;
+    font-size:13px;
+    border-radius:8px;
+    padding:6px 12px;
   }
   .admin-turno-label{
     font-weight:700;
@@ -964,7 +978,7 @@
 
       <div id="adminTabHorarios" class="admin-tab-panel hidden">
         <div class="admin-section-label">Horario de operación por día</div>
-        <div class="sub" style="margin-bottom:14px;">Cada día puede tener hasta 2 turnos, con horarios distintos. Deja un turno vacío si ese día no se trabaja en él. Si un día no tiene ningún turno con horario, ese día no habrá alarma automática. Si NINGÚN día tiene nada configurado, se considera siempre activo (comportamiento anterior).</div>
+        <div class="sub" style="margin-bottom:14px;">Cada día tiene un turno por defecto; toca "+ Agregar turno" si ese día trabaja más de un turno, o "✕" para quitarlo. Deja un turno sin horas o quítalo si ese día no se trabaja. Si un turno cruza la medianoche (ej. 16:00 a 01:00), ponlo así tal cual y el sistema entiende que sigue activo hasta la 01:00 del día siguiente. Si un día no tiene ningún turno con horario, ese día no habrá alarma automática. Si NINGÚN día tiene nada configurado, se considera siempre activo (comportamiento anterior).</div>
         <div id="adminHorarioDias"></div>
         <button class="btn-secondary admin-add-btn" id="adminGuardarHorarioBtn">Guardar horario</button>
 
@@ -1746,7 +1760,7 @@
     return d;
   }
 
-  // ---- Horario de operación por día (2 turnos por día) ----
+  // ---- Horario de operación por día (turnos configurables por día) ----
   var DIAS_SEMANA = [
     { clave: "lunes", label: "Lunes" },
     { clave: "martes", label: "Martes" },
@@ -1759,20 +1773,21 @@
   // Índice = Date.getDay() (0 = domingo ... 6 = sábado).
   var DIAS_POR_INDICE_JS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
 
-  function turnoVacio(){ return { inicio: "", fin: "" }; }
+  function diaAnteriorIndiceJs_(indiceJs){ return (indiceJs + 6) % 7; }
 
   function cargarHorario(){
     var def = {};
-    DIAS_SEMANA.forEach(function(d){ def[d.clave] = { t1: turnoVacio(), t2: turnoVacio() }; });
+    DIAS_SEMANA.forEach(function(d){ def[d.clave] = { turnos: [{ inicio: "", fin: "" }] }; });
     try{
       var guardado = JSON.parse(localStorage.getItem(HORARIO_KEY) || "null");
       if (guardado && typeof guardado === "object"){
         DIAS_SEMANA.forEach(function(d){
           var g = guardado[d.clave];
-          if (g){
+          if (g && Array.isArray(g.turnos) && g.turnos.length){
             def[d.clave] = {
-              t1: { inicio: (g.t1 && g.t1.inicio) || "", fin: (g.t1 && g.t1.fin) || "" },
-              t2: { inicio: (g.t2 && g.t2.inicio) || "", fin: (g.t2 && g.t2.fin) || "" }
+              turnos: g.turnos.map(function(t){
+                return { inicio: (t && t.inicio) || "", fin: (t && t.fin) || "" };
+              })
             };
           }
         });
@@ -1787,35 +1802,51 @@
 
   function horarioTotalmenteVacio(h){
     return DIAS_SEMANA.every(function(d){
-      var c = h[d.clave];
-      return !c.t1.inicio && !c.t1.fin && !c.t2.inicio && !c.t2.fin;
+      return h[d.clave].turnos.every(function(t){ return !t.inicio && !t.fin; });
     });
   }
 
-  function dentroDeTurno_(actual, turno){
+  // La parte del turno que corresponde al MISMO día en que empieza: desde
+  // el inicio hasta el fin (o, si cruza medianoche, desde el inicio hasta
+  // las 23:59 — el resto de madrugada pertenece al día siguiente).
+  function turnoActivoMismoDia_(actual, turno){
     if (!turno || !turno.inicio || !turno.fin) return false;
     if (turno.inicio <= turno.fin){
       return actual >= turno.inicio && actual < turno.fin;
     }
-    return actual >= turno.inicio || actual < turno.fin;
+    return actual >= turno.inicio;
+  }
+
+  // La "cola" de un turno que empezó AYER y cruza medianoche (ej. 16:00 a
+  // 01:00): entre las 00:00 y el fin de hoy, sigue siendo ese turno de ayer.
+  function turnoActivoColaDeAyer_(actual, turno){
+    if (!turno || !turno.inicio || !turno.fin) return false;
+    if (turno.inicio <= turno.fin) return false;
+    return actual < turno.fin;
   }
 
   function dentroDeHorario(now){
     var h = cargarHorario();
     if (horarioTotalmenteVacio(h)) return true; // nada configurado -> siempre activo
-    var cfg = h[DIAS_POR_INDICE_JS[now.getDay()]];
     var actual = pad(now.getHours()) + ":" + pad(now.getMinutes());
-    return dentroDeTurno_(actual, cfg.t1) || dentroDeTurno_(actual, cfg.t2);
-  }
-
-  function textoTurno_(turno){
-    return (turno && turno.inicio && turno.fin) ? (turno.inicio + " a " + turno.fin) : null;
+    var hoy = h[DIAS_POR_INDICE_JS[now.getDay()]];
+    var ayer = h[DIAS_POR_INDICE_JS[diaAnteriorIndiceJs_(now.getDay())]];
+    var activoHoy = hoy.turnos.some(function(t){ return turnoActivoMismoDia_(actual, t); });
+    var activoColaDeAyer = ayer.turnos.some(function(t){ return turnoActivoColaDeAyer_(actual, t); });
+    return activoHoy || activoColaDeAyer;
   }
 
   function textoHorarioDeHoy_(h, now){
-    var cfg = h[DIAS_POR_INDICE_JS[now.getDay()]];
-    var partes = [textoTurno_(cfg.t1), textoTurno_(cfg.t2)].filter(Boolean);
-    return partes.length ? partes.join(" y ") : "sin turnos hoy";
+    var hoy = h[DIAS_POR_INDICE_JS[now.getDay()]];
+    var ayer = h[DIAS_POR_INDICE_JS[diaAnteriorIndiceJs_(now.getDay())]];
+    var partes = hoy.turnos
+      .filter(function(t){ return t.inicio && t.fin; })
+      .map(function(t){ return t.inicio + " a " + t.fin; });
+    var colas = ayer.turnos
+      .filter(function(t){ return t.inicio && t.fin && t.inicio > t.fin; })
+      .map(function(t){ return "turno de ayer hasta " + t.fin; });
+    var todas = colas.concat(partes);
+    return todas.length ? todas.join(", ") : "sin turnos hoy";
   }
 
   function actualizarEstadoHorario(now){
@@ -1835,6 +1866,20 @@
     }
   }
 
+  function crearFilaTurnoAdmin_(inicio, fin){
+    var row = document.createElement("div");
+    row.className = "admin-dia-turno";
+    row.innerHTML =
+      '<input type="time" class="admin-dia-input" data-campo="inicio" value="' + inicio + '">' +
+      '<span class="admin-dia-turno-sep">–</span>' +
+      '<input type="time" class="admin-dia-input" data-campo="fin" value="' + fin + '">' +
+      '<button type="button" class="admin-dia-quitar-turno" aria-label="Quitar turno">✕</button>';
+    row.querySelector(".admin-dia-quitar-turno").addEventListener("click", function(){
+      row.remove();
+    });
+    return row;
+  }
+
   function renderAdminHorario(){
     var h = cargarHorario();
     adminHorarioDiasEl.innerHTML = "";
@@ -1843,20 +1888,28 @@
       var fila = document.createElement("div");
       fila.className = "admin-dia-fila";
       fila.dataset.dia = d.clave;
-      fila.innerHTML =
-        '<span class="admin-dia-label">' + d.label + '</span>' +
-        '<div class="admin-dia-turno">' +
-          '<span class="admin-dia-turno-label">Turno 1</span>' +
-          '<input type="time" class="admin-dia-input" data-campo="t1-inicio" value="' + cfg.t1.inicio + '">' +
-          '<span class="admin-dia-turno-sep">–</span>' +
-          '<input type="time" class="admin-dia-input" data-campo="t1-fin" value="' + cfg.t1.fin + '">' +
-        '</div>' +
-        '<div class="admin-dia-turno">' +
-          '<span class="admin-dia-turno-label">Turno 2</span>' +
-          '<input type="time" class="admin-dia-input" data-campo="t2-inicio" value="' + cfg.t2.inicio + '">' +
-          '<span class="admin-dia-turno-sep">–</span>' +
-          '<input type="time" class="admin-dia-input" data-campo="t2-fin" value="' + cfg.t2.fin + '">' +
-        '</div>';
+
+      var label = document.createElement("span");
+      label.className = "admin-dia-label";
+      label.textContent = d.label;
+      fila.appendChild(label);
+
+      var turnosEl = document.createElement("div");
+      turnosEl.className = "admin-dia-turnos";
+      cfg.turnos.forEach(function(t){
+        turnosEl.appendChild(crearFilaTurnoAdmin_(t.inicio, t.fin));
+      });
+      fila.appendChild(turnosEl);
+
+      var agregarBtn = document.createElement("button");
+      agregarBtn.type = "button";
+      agregarBtn.className = "admin-dia-agregar-turno";
+      agregarBtn.textContent = "+ Agregar turno";
+      agregarBtn.addEventListener("click", function(){
+        turnosEl.appendChild(crearFilaTurnoAdmin_("", ""));
+      });
+      fila.appendChild(agregarBtn);
+
       adminHorarioDiasEl.appendChild(fila);
     });
   }
@@ -1864,11 +1917,14 @@
   adminGuardarHorarioBtn.addEventListener("click", function(){
     var nuevo = {};
     adminHorarioDiasEl.querySelectorAll(".admin-dia-fila").forEach(function(fila){
-      function val(campo){ return fila.querySelector('[data-campo="' + campo + '"]').value; }
-      nuevo[fila.dataset.dia] = {
-        t1: { inicio: val("t1-inicio"), fin: val("t1-fin") },
-        t2: { inicio: val("t2-inicio"), fin: val("t2-fin") }
-      };
+      var turnos = [];
+      fila.querySelectorAll(".admin-dia-turno").forEach(function(row){
+        turnos.push({
+          inicio: row.querySelector('[data-campo="inicio"]').value,
+          fin: row.querySelector('[data-campo="fin"]').value
+        });
+      });
+      nuevo[fila.dataset.dia] = { turnos: turnos };
     });
     guardarHorario(nuevo);
     mostrarToast("Horario guardado.");
