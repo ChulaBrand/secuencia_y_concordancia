@@ -985,7 +985,7 @@
 
       <div id="adminTabHorarios" class="admin-tab-panel hidden">
         <div class="admin-section-label">Horario de operación por día</div>
-        <div class="sub" style="margin-bottom:14px;">Cada día tiene un turno por defecto; toca "+ Agregar turno" si ese día trabaja más de un turno, o "✕" para quitarlo. Deja un turno sin horas o quítalo si ese día no se trabaja. Si un turno cruza la medianoche (ej. 16:00 a 01:00), ponlo así tal cual y el sistema entiende que sigue activo hasta la 01:00 del día siguiente. Si un día no tiene ningún turno con horario, ese día no habrá alarma automática. Si NINGÚN día tiene nada configurado, se considera siempre activo (comportamiento anterior).</div>
+        <div class="sub" style="margin-bottom:14px;">Cada día tiene un turno por defecto; toca "+ Agregar turno" si ese día trabaja más de un turno, o "✕" para quitarlo. Deja un turno sin horas o quítalo si ese día no se trabaja. Si un turno cruza la medianoche (ej. 16:00 a 01:00), ponlo así tal cual y el sistema entiende que sigue activo hasta la 01:00 del día siguiente. Si un día no tiene ningún turno con horario, ese día no habrá alarma automática. <strong>Mientras no configures nada aquí, la alarma y la torreta quedan en pausa</strong> (no suenan todo el día por defecto) — hay que guardar al menos un turno para que se activen.</div>
         <div id="adminHorarioDias"></div>
         <button class="btn-secondary admin-add-btn" id="adminGuardarHorarioBtn">Guardar horario</button>
 
@@ -1832,9 +1832,12 @@
     return actual < turno.fin;
   }
 
+  // Si nadie ha configurado ningún turno, no hay horario activo (así la
+  // alarma/torreta no suenan todo el día por defecto). Hay que configurar
+  // el horario en el admin para que se active.
   function dentroDeHorario(now){
     var h = cargarHorario();
-    if (horarioTotalmenteVacio(h)) return true; // nada configurado -> siempre activo
+    if (horarioTotalmenteVacio(h)) return false;
     var actual = pad(now.getHours()) + ":" + pad(now.getMinutes());
     var hoy = h[DIAS_POR_INDICE_JS[now.getDay()]];
     var ayer = h[DIAS_POR_INDICE_JS[diaAnteriorIndiceJs_(now.getDay())]];
@@ -1859,7 +1862,9 @@
   function actualizarEstadoHorario(now){
     var h = cargarHorario();
     if (horarioTotalmenteVacio(h)){
-      horarioEstadoEl.classList.add("hidden");
+      horarioEstadoEl.classList.remove("hidden");
+      horarioEstadoEl.classList.add("fuera");
+      horarioEstadoEl.textContent = "No hay horario de operación configurado — la alarma automática y la torreta están en pausa hasta que se configure en el admin.";
       return;
     }
     horarioEstadoEl.classList.remove("hidden");
