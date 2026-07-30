@@ -1462,13 +1462,20 @@
   });
 
   // ---- Alarma fuerte + parpadeo cuando hay una ronda pendiente ----
+  // Los límites (5-180s) se aplican SIEMPRE al leer, no solo cuando se
+  // guarda desde el admin: si el dato llega de otra forma (por ejemplo un
+  // respaldo importado sin validar), igual queda acotado y la alarma nunca
+  // puede quedar sonando por un tiempo desproporcionado.
   function cargarAlarmaConfig(){
     try{
       var cfg = JSON.parse(localStorage.getItem(ALARMA_KEY) || "null") || {};
+      var duracion = parseInt(cfg.duracion, 10);
+      if (!duracion) duracion = 30;
+      duracion = Math.min(180, Math.max(5, duracion));
       return {
-        duracion: cfg.duracion || 30,
-        volumen: cfg.volumen || "fuerte",
-        sonido: cfg.sonido || "clasico"
+        duracion: duracion,
+        volumen: VOLUMENES[cfg.volumen] ? cfg.volumen : "fuerte",
+        sonido: SONIDOS[cfg.sonido] ? cfg.sonido : "clasico"
       };
     }catch(e){ return { duracion: 30, volumen: "fuerte", sonido: "clasico" }; }
   }
@@ -2020,12 +2027,18 @@
   });
 
   // ---- Torreta física (Arduino): horario + ventana de advertencia ----
+  function clampVentanaMin_(valor){
+    var n = parseInt(valor, 10);
+    if (!n) n = 1;
+    return Math.min(15, Math.max(1, n));
+  }
+
   function cargarTorretaConfig(){
     try{
       var cfg = JSON.parse(localStorage.getItem(TORRETA_KEY) || "null") || {};
       return {
-        ventanaAntesMin: cfg.ventanaAntesMin || 1,
-        ventanaDespuesMin: cfg.ventanaDespuesMin || 1
+        ventanaAntesMin: clampVentanaMin_(cfg.ventanaAntesMin),
+        ventanaDespuesMin: clampVentanaMin_(cfg.ventanaDespuesMin)
       };
     }catch(e){ return { ventanaAntesMin: 1, ventanaDespuesMin: 1 }; }
   }
@@ -2162,9 +2175,19 @@
     mostrarToast("Alarma guardada.");
   });
 
+  // Los sonidos duran menos de 2s; cerrar el contexto después evita que en
+  // un kiosco corriendo días/semanas se acumulen AudioContext sin cerrar
+  // (podría hacer que el navegador deje de reproducir sonido nuevo).
+  function cerrarContextoLuego_(ctx){
+    setTimeout(function(){
+      try{ ctx.close(); }catch(e){ /* ya cerrado o no disponible */ }
+    }, 2000);
+  }
+
   adminProbarSonidoBtn.addEventListener("click", function(){
     try{
       var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      cerrarContextoLuego_(ctx);
       var pico = VOLUMENES[adminAlarmaVolumen.value] || VOLUMENES.fuerte;
       var reproducir = SONIDOS[adminAlarmaSonido.value] || SONIDOS.clasico;
       reproducir(ctx, pico);
@@ -2259,6 +2282,7 @@
   function sonarAlerta(){
     try{
       var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      cerrarContextoLuego_(ctx);
       var cfg = cargarAlarmaConfig();
       var pico = VOLUMENES[cfg.volumen] || VOLUMENES.fuerte;
       var reproducir = SONIDOS[cfg.sonido] || SONIDOS.clasico;
